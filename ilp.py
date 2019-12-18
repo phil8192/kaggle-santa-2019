@@ -1,12 +1,14 @@
 import pandas as pd
-from pulp import *
+#from pulp import *
+#https://buildmedia.readthedocs.org/media/pdf/python-mip/latest/python-mip.pdf
+from mip.model import *
 
 data = pd.read_csv('../data/family_data.csv', index_col='family_id')
 lims = pd.read_csv('n.csv')
 lims = lims["x"].values
 
 diffs = pd.read_csv('diffs.csv')
-diffs = lims["x"].values
+diffs = diffs["x"].values
 
 sol = pd.read_csv('/tmp/lala.csv')
 
@@ -30,7 +32,8 @@ def cost(choice, members):
     x = cost_dict[choice]
     return x[0] + members * x[1]
 
-santa = LpProblem('santa')
+#santa = LpProblem('santa')
+santa = Model(sense=MINIMIZE, solver_name=CBC)
 
 fam_choices = []
 day_assignments = []
@@ -50,11 +53,13 @@ for j in range(0, 5000):
         fam_day_choices[j].append(k)
         num_ppl = data['n_people'][j]
         penalty = cost(i, num_ppl)
-        ass = LpVariable('ASS_{}_{}_{}'.format(i, j, k), lowBound=0, upBound=1, cat=LpBinary)
-        if k == sol_choice:
-            ass.setInitialValue(True)
-        else:
-            ass.setInitialValue(False)
+        #ass = LpVariable('ASS_{}_{}_{}'.format(i, j, k), lowBound=0, upBound=1, cat=LpBinary)
+        ass = santa.add_var(name="ASS_{}_{}_{}".format(i,j,k), lb=0, ub=1, var_type=BINARY)
+    
+#        if k == sol_choice:
+#            ass.x = 1 
+#        else:
+#            ass.x = 0
         
         obj.append(penalty * ass)
         fam_choice.append(ass)
@@ -62,8 +67,13 @@ for j in range(0, 5000):
 
     fam_choices.append(fam_choice)
 
+extras = []
+for i in range(0, 100):
+    extras.append(santa.add_var(name="EXT_{}".format(i), lb=0, ub=200, var_type=INTEGER))
+
 # minimise ass*pen +...+ ass*pen... 
-santa += lpSum(obj)
+#santa += lpSum(obj+extras)
+santa.objective = minimize(xsum(obj+extras))
 
 # constraints
 
@@ -71,14 +81,16 @@ santa += lpSum(obj)
 # ASS_0_i_j + ASS_1_i_j + ASS_2_i_j == 1
 for i in range(0, 5000):
     fam_choice = fam_choices[i]
-    santa += lpSum(fam_choice) == 1, "AT_MOST_ONE_{}".format(i)
+    #santa += lpSum(fam_choice) == 1, "AT_MOST_ONE_{}".format(i)
+    santa += xsum(fam_choice) == 1, "AT_MOST_ONE_{}".format(i)
 
 # each day must have between 125 and 300 ppl. 
 for i in range(0, 100):
     day_assignment = day_assignments[i]
-    santa += lpSum(day_assignment) <= 300, "DAY_CONSTRAINT_LT{}".format(i+1)
+    santa += xsum(day_assignment) <= 300, "DAY_CONSTRAINT_LT{}".format(i+1)
+
     #santa += lpSum(day_assignment) <= lims[i], "DAY_CONSTRAINT_LT{}".format(i+1)
-    santa += lpSum(day_assignment) >= 125, "DAY_CONSTRAINT_GT{}".format(i+1)
+    santa += xsum(day_assignment) >= 125, "DAY_CONSTRAINT_GT{}".format(i+1)
 #    santa += lpSum(day_assignment) == lims[i], "DAY_CONSTRAINT_EQ{}".format(i+1)
 
 for i in range(1, 100):
@@ -86,33 +98,37 @@ for i in range(1, 100):
     day_pre = day_assignments[i-1]
     #santa += lpSum(day_now) - lpSum(day_pre) <= 23, "CHANGE_CONSTRAINT_A_{}".format(i+1)
     #santa += lpSum(day_pre) - lpSum(day_now) <= 23, "CHANGE_CONSTRAINT_B_{}".format(i+1)
-    diff_max = diffs[i-1]
-    santa += lpSum(day_now) - lpSum(day_pre) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
-    santa += lpSum(day_pre) - lpSum(day_now) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+    extra = extras[i-1]
+    diff_max = diffs[i-1] + extra
+    santa += xsum(day_now) - xsum(day_pre) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+    santa += xsum(day_pre) - xsum(day_now) <= diff_max, "CHANGE_CONSTRAINT_B_{}".format(i+1)
 
 
-santa.writeLP('santa.lp')
+santa.write('santa.lp')
 
 # using coin-or solver
-threads = 12 
-santa.solve(solver=COIN_CMD(msg=1, mip=1, presolve=1, strong=1, cuts=1, maxSeconds=60*300, dual=1, threads=threads))
+#threads = 12 
+#santa.solve(solver=COIN_CMD(msg=1, mip=1, presolve=1, strong=0, cuts=1, maxSeconds=60*400, dual=0, threads=threads))
 # gnu
 #santa.solve(solver=GLPK_CMD(keepFiles=0, mip=1, msg=1))
 
-all_cap = 0
-for i in range(0, 100):
-    cap = lpSum(day_assignments[i]).value()
-    all_cap += cap
-    print(cap)
+santa.preprocess=1
+santa.opt_tol=1e-6
+santa.max_mip_gap=1e-4
+santa.lp_method=1 # AUTO=0, BARRIER=3, DUAL=1, PRIMAL=2
+santa.integer_tol=1e-6
+santa.threads=12
+santa.verbose=1
+santa.optimize(max_seconds=10)
 
 
-print("objective = ", value(santa.objective))
+#print("objective = ", value(santa.objective))
 
 with open('lala.csv', 'w') as f:
     f.write("family_id,assigned_day\n")
     for i in range(0,5000):
         x = fam_choices[i]
-        ass_v = [choice.value() for choice in x]
+        ass_v = [choice.x for choice in x]
         ass = fam_day_choices[i][ass_v.index(max(ass_v))]
         print(ass_v)
         f.write("{},{}\n".format(i,ass))
