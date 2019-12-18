@@ -35,8 +35,8 @@ for i in range(0, 100):
     day_assignments.append([])
 
 obj = []
-#choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5', 'choice_6', 'choice_7', 'choice_8', 'choice_9']
-choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3']
+choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5', 'choice_6', 'choice_7', 'choice_8', 'choice_9']
+#choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5']
         
 for j in range(0, 5000):
     sol_choice = sol['assigned_day'][j]
@@ -73,15 +73,22 @@ for i in range(0, 5000):
 # each day must have between 125 and 300 ppl. 
 for i in range(0, 100):
     day_assignment = day_assignments[i]
-    #santa += lpSum(day_assignment) <= 300, "DAY_CONSTRAINT_LT{}".format(i+1)
-    santa += lpSum(day_assignment) <= lims[i], "DAY_CONSTRAINT_LT{}".format(i+1)
+    santa += lpSum(day_assignment) <= 300, "DAY_CONSTRAINT_LT{}".format(i+1)
+    #santa += lpSum(day_assignment) <= lims[i], "DAY_CONSTRAINT_LT{}".format(i+1)
     santa += lpSum(day_assignment) >= 125, "DAY_CONSTRAINT_GT{}".format(i+1)
+#    santa += lpSum(day_assignment) == lims[i], "DAY_CONSTRAINT_EQ{}".format(i+1)
+
+for i in range(1, 100):
+    day_now = day_assignments[i]
+    day_pre = day_assignments[i-1]
+    santa += lpSum(day_now) - lpSum(day_pre) <= 23, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+    santa += lpSum(day_pre) - lpSum(day_now) <= 23, "CHANGE_CONSTRAINT_B_{}".format(i+1)
 
 santa.writeLP('santa.lp')
 
 # using coin-or solver
 threads = 12 
-santa.solve(solver=COIN_CMD(msg=1, mip=1, presolve=1, strong=0, cuts=1, maxSeconds=60*300, dual=0, threads=threads))
+santa.solve(solver=COIN_CMD(msg=1, mip=1, presolve=1, strong=1, cuts=1, maxSeconds=60*300, dual=1, threads=threads))
 # gnu
 #santa.solve(solver=GLPK_CMD(keepFiles=0, mip=1, msg=1))
 
