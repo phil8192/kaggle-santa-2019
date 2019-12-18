@@ -5,6 +5,9 @@ data = pd.read_csv('../data/family_data.csv', index_col='family_id')
 lims = pd.read_csv('n.csv')
 lims = lims["x"].values
 
+diffs = pd.read_csv('diffs.csv')
+diffs = lims["x"].values
+
 sol = pd.read_csv('/tmp/lala.csv')
 
 fam_day_choices = {i:[] for i in range(0,5000)}
@@ -81,8 +84,12 @@ for i in range(0, 100):
 for i in range(1, 100):
     day_now = day_assignments[i]
     day_pre = day_assignments[i-1]
-    santa += lpSum(day_now) - lpSum(day_pre) <= 23, "CHANGE_CONSTRAINT_A_{}".format(i+1)
-    santa += lpSum(day_pre) - lpSum(day_now) <= 23, "CHANGE_CONSTRAINT_B_{}".format(i+1)
+    #santa += lpSum(day_now) - lpSum(day_pre) <= 23, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+    #santa += lpSum(day_pre) - lpSum(day_now) <= 23, "CHANGE_CONSTRAINT_B_{}".format(i+1)
+    diff_max = diffs[i-1]
+    santa += lpSum(day_now) - lpSum(day_pre) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+    santa += lpSum(day_pre) - lpSum(day_now) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+
 
 santa.writeLP('santa.lp')
 
