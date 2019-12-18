@@ -41,8 +41,8 @@ for i in range(0, 100):
     day_assignments.append([])
 
 obj = []
-choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5', 'choice_6', 'choice_7', 'choice_8', 'choice_9']
-#choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5']
+#choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5', 'choice_6', 'choice_7', 'choice_8', 'choice_9']
+choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5']
         
 for j in range(0, 5000):
     sol_choice = sol['assigned_day'][j]
@@ -67,13 +67,13 @@ for j in range(0, 5000):
 
     fam_choices.append(fam_choice)
 
-extras = []
-for i in range(0, 100):
-    extras.append(santa.add_var(name="EXT_{}".format(i), lb=0, ub=200, var_type=INTEGER))
+#extras = []
+#for i in range(0, 100):
+#    extras.append(santa.add_var(name="EXT_{}".format(i), lb=0, ub=200, var_type=INTEGER))
 
 # minimise ass*pen +...+ ass*pen... 
 #santa += lpSum(obj+extras)
-santa.objective = minimize(xsum(obj+extras))
+santa.objective = minimize(xsum(obj))#+extras))
 
 # constraints
 
@@ -93,15 +93,17 @@ for i in range(0, 100):
     santa += xsum(day_assignment) >= 125, "DAY_CONSTRAINT_GT{}".format(i+1)
 #    santa += lpSum(day_assignment) == lims[i], "DAY_CONSTRAINT_EQ{}".format(i+1)
 
-for i in range(1, 100):
-    day_now = day_assignments[i]
-    day_pre = day_assignments[i-1]
-    #santa += lpSum(day_now) - lpSum(day_pre) <= 23, "CHANGE_CONSTRAINT_A_{}".format(i+1)
-    #santa += lpSum(day_pre) - lpSum(day_now) <= 23, "CHANGE_CONSTRAINT_B_{}".format(i+1)
-    extra = extras[i-1]
-    diff_max = diffs[i-1] + extra
-    santa += xsum(day_now) - xsum(day_pre) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
-    santa += xsum(day_pre) - xsum(day_now) <= diff_max, "CHANGE_CONSTRAINT_B_{}".format(i+1)
+#for i in range(1, 100):
+#    day_now = day_assignments[i]
+#    day_pre = day_assignments[i-1]
+#    santa += xsum(day_now) - xsum(day_pre) <= 23, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+#    santa += xsum(day_pre) - xsum(day_now) <= 23, "CHANGE_CONSTRAINT_B_{}".format(i+1)
+    
+
+    #extra = extras[i-1]
+#    diff_max = diffs[i-1]# + extra
+#    santa += xsum(day_now) - xsum(day_pre) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
+#    santa += xsum(day_pre) - xsum(day_now) <= diff_max, "CHANGE_CONSTRAINT_B_{}".format(i+1)
 
 
 santa.write('santa.lp')
@@ -113,13 +115,15 @@ santa.write('santa.lp')
 #santa.solve(solver=GLPK_CMD(keepFiles=0, mip=1, msg=1))
 
 santa.preprocess=1
-santa.opt_tol=1e-6
-santa.max_mip_gap=1e-4
+santa.opt_tol=1e-3
+santa.max_mip_gap=1e-3
 santa.lp_method=1 # AUTO=0, BARRIER=3, DUAL=1, PRIMAL=2
-santa.integer_tol=1e-6
+santa.integer_tol=1e-3
 santa.threads=12
 santa.verbose=1
-santa.optimize(max_seconds=10)
+santa.cuts=2 # 2 aggressive, 1 default, -1 = automatic, 3=even more
+santa.emphasis=2 #1 = feasibility, 2=optimality, 0=balance
+santa.optimize(max_seconds=60*60)
 
 
 #print("objective = ", value(santa.objective))
