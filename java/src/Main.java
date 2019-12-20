@@ -1,9 +1,11 @@
 public class Main {
 	private static final int MAX_FAM_SIZE = 10;
 	private static final int MAX_CHOICE = 10;
+	private static final int MIN_PPL = 125;
+	private static final int MAX_PPL = 300;
 
 	private final double[][] penalties;
-
+	private final double[][] accounting;
 
 	Main() {
 		this.penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE];
@@ -19,6 +21,15 @@ public class Main {
 			penalties[i][8] = 400 + 36 * i;
 			penalties[i][9] = 500 + 36 * i + 199 * i;
 			penalties[i][10] = 500 + 36 * i + 398 * i;
+		}
+		int max_cap = MAX_PPL - MIN_PPL;
+		this.accounting = new double[max_cap][max_cap];
+		for (int i = 0; i < max_cap; i++) {
+			int now = MIN_PPL + i;
+			for (int j = 0; j < max_cap; j++) {
+				int pre = MIN_PPL + j;
+				accounting[i][j] = ((now - 125) / 400.0) * Math.pow(now, 0.5 + (Math.abs(now - pre) / 50.0));
+			}
 		}
 	}
 
