@@ -9,10 +9,10 @@ public class CsvReader {
 			try (BufferedReader reader = new BufferedReader(new FileReader(src))) {
 				for (String row = reader.readLine() /* skip header */; (row = reader.readLine()) != null; ) {
 					String[] split_row = row.split(",");
-					int[] f_row = new int[]{
-							Integer.parseInt(split_row[0]),
-							Integer.parseInt(split_row[1])
-					};
+					int[] f_row = new int[split_row.length];
+					for (int i = 0; i < split_row.length; i++) {
+						f_row[i] = Integer.parseInt(split_row[i]);
+					}
 					a.add(f_row);
 				}
 				return a.toArray(new int[][]{});
