@@ -42,8 +42,9 @@ for i in range(0, 100):
 
 obj = []
 #choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5', 'choice_6', 'choice_7', 'choice_8', 'choice_9']
-choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5']
-        
+#choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3', 'choice_4', 'choice_5']
+choices = ['choice_0', 'choice_1', 'choice_2', 'choice_3']
+
 for j in range(0, 5000):
     sol_choice = sol['assigned_day'][j]
     fam_choice = []
@@ -81,17 +82,13 @@ santa.objective = minimize(xsum(obj))#+extras))
 # ASS_0_i_j + ASS_1_i_j + ASS_2_i_j == 1
 for i in range(0, 5000):
     fam_choice = fam_choices[i]
-    #santa += lpSum(fam_choice) == 1, "AT_MOST_ONE_{}".format(i)
     santa += xsum(fam_choice) == 1, "AT_MOST_ONE_{}".format(i)
 
 # each day must have between 125 and 300 ppl. 
 for i in range(0, 100):
     day_assignment = day_assignments[i]
     santa += xsum(day_assignment) <= 300, "DAY_CONSTRAINT_LT{}".format(i+1)
-
-    #santa += lpSum(day_assignment) <= lims[i], "DAY_CONSTRAINT_LT{}".format(i+1)
     santa += xsum(day_assignment) >= 125, "DAY_CONSTRAINT_GT{}".format(i+1)
-#    santa += lpSum(day_assignment) == lims[i], "DAY_CONSTRAINT_EQ{}".format(i+1)
 
 #for i in range(1, 100):
 #    day_now = day_assignments[i]
@@ -104,7 +101,12 @@ for i in range(0, 100):
 #    diff_max = diffs[i-1]# + extra
 #    santa += xsum(day_now) - xsum(day_pre) <= diff_max, "CHANGE_CONSTRAINT_A_{}".format(i+1)
 #    santa += xsum(day_pre) - xsum(day_now) <= diff_max, "CHANGE_CONSTRAINT_B_{}".format(i+1)
+#santa += xsum(obj) == 62868
 
+L = 62868 - 0 
+H = 62868 + 0 
+santa += xsum(obj) >= L
+santa += xsum(obj) <= H
 
 santa.write('santa.lp')
 
@@ -118,7 +120,7 @@ santa.preprocess=1
 santa.opt_tol=1e-3
 santa.max_mip_gap=1e-3
 santa.lp_method=1 # AUTO=0, BARRIER=3, DUAL=1, PRIMAL=2
-santa.integer_tol=1e-3
+santa.integer_tol=1e-2
 santa.threads=12
 santa.verbose=1
 santa.cuts=2 # 2 aggressive, 1 default, -1 = automatic, 3=even more
