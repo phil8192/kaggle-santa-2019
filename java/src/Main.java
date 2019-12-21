@@ -75,6 +75,8 @@ public class Main {
 	private double getAccountingCost(final int now, final int pre) {
 		//int diff = abs(now - pre);
 		//return ((now - 125) / 400.0) * Math.pow(now, 0.5 + (diff / 50.0));
+		assert now >= 125 && now <= 300;
+		assert pre >= 125 && pre <= 300;
 		return accountingCost[now][pre];
 	}
 
