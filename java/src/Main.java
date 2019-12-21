@@ -15,7 +15,7 @@ public class Main {
 	final double[][] all_penalties;
 
 	Main(int[][] family_data) {
-		this.penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE];
+		this.penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE+1];
 		for (int i = 1; i < MAX_FAM_SIZE; i++) {
 			penalties[i][0] = 0;
 			penalties[i][1] = 50;
@@ -55,24 +55,29 @@ public class Main {
 		}
 	}
 
-	// [fam_choice, fam_choice] ... 5000
-
 	private double cost(final int[] familyAssignments) {
 		double penalty = 0.0;
 		double accounting = 0.0;
 		for(int i = 0, len = familyAssignments.length; i < len; i++) {
 			final int day = familyAssignments[i];
-			penalty += all_penalties[i][day];
-
+			final double fam_penalty = all_penalties[i][day];
+			assert fam_penalty != Double.MAX_VALUE;
+			penalty += fam_penalty;
 		}
 		return penalty + accounting;
 	}
 
 	public static void main(String[] meh) {
-		int[][] family_data = CsvReader.read("../../data/family_data.csv");
-		int[][] starting_solution = CsvReader.read("../../submission_71647.5625.csv");
-		int[] starting_assignments = starting_solution[1];
+		int[][] family_data = CsvReader.read("../../../data/family_data.csv");
+		//int[][] starting_solution = CsvReader.read("../../../submission_71647.5625.csv");
+		int[][] starting_solution = CsvReader.read("../../lala.csv");
+		int[] starting_assignments = new int[starting_solution.length];
+		for(int i = 0; i < starting_solution.length; i++) {
+			starting_assignments[i] = starting_solution[i][1];
+		}
 		Main main = new Main(family_data);
-		System.out.println(main.cost(starting_assignments));
+		long l = System.currentTimeMillis();
+		double cost = main.cost(starting_assignments);
+		System.out.println(cost + " (" + (System.currentTimeMillis() - l) + "ms)");
 	}
 }
