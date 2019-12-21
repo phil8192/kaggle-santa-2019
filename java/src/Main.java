@@ -75,8 +75,8 @@ public class Main {
 	private double getAccountingCost(final int now, final int pre) {
 		//int diff = abs(now - pre);
 		//return ((now - 125) / 400.0) * Math.pow(now, 0.5 + (diff / 50.0));
-		assert now >= 125 && now <= 300;
-		assert pre >= 125 && pre <= 300;
+		//assert now >= 125 && now <= 300;
+		//assert pre >= 125 && pre <= 300;
 		return accountingCost[now][pre];
 	}
 
@@ -121,7 +121,7 @@ public class Main {
 		boolean improvement;
 		do {
 			improvement = false;
-			for (int i = 0; i < assignments.length; i++) { // each family i
+			fams: for (int i = 0; i < assignments.length; i++) { // each family i
 				final int[] prefs = familyPrefs[i];
 				final int famSize = familySize[i];
 				final int assignedDay = assignments[i];
@@ -140,13 +140,27 @@ public class Main {
 						if(delta < 0.0) {
 							best += delta;
 							improvement = true;
-							break;
+							i = 0;
+							break fams; // start from family 0 again
 						}
 					}
 				}
 			}
 		} while(improvement);
 		return best;
+	}
+
+	private void sanity(int[] assignments) throws Exception {
+		int[] dayCaps = new int[100+1];
+		for(int i = 0; i < assignments.length; i++) {
+			int assignment = assignments[i];
+			dayCaps[assignment] += familySize[i];
+		}
+		for(int i = 1; i < dayCaps.length; i++) {
+			int cap = dayCaps[i];
+			if(cap < MIN_PPL) throw new Exception("cap " + cap + " < " + MIN_PPL);
+			if(cap > MAX_PPL) throw new Exception("cap " + cap + " > " + MAX_PPL);
+		}
 	}
 
 	private double optimise(final int[] assignments) {
@@ -159,9 +173,15 @@ public class Main {
 
 			if(score < best) {
 				best = score;
-				System.out.println("**** new best = " + best + " ****");
-				CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
-				CsvUtil.write(assignments, "../../solutions/best.csv");
+				try {
+					sanity(assignments);
+					System.out.println("**** new best = " + best + " ****");
+					CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
+					CsvUtil.write(assignments, "../../solutions/best.csv");
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 			}
 		}
 		return best;
@@ -169,9 +189,10 @@ public class Main {
 
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
-		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
-		//int[][] starting_solution = CsvReader.read("/tmp/lala.csv"); // 77124.66595889143
-		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
+		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
+		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		//int[][] starting_solution = CsvUtil.read("../../solutions/bad.csv"); //  1725999432440170
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
