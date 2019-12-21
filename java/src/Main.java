@@ -93,6 +93,21 @@ public class Main {
 		return penalty + accounting;
 	}
 
+	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam, final int[] assignments, final double best) {
+		dayCapacities[assignedDay] -= famSize;
+		dayCapacities[candidateDay] += famSize;
+		assignments[fam] = candidateDay;
+		final double candidateScore = cost(assignments);
+		if (candidateScore < best) {
+			return candidateScore - best;
+		} else {
+			dayCapacities[assignedDay] += famSize;
+			dayCapacities[candidateDay] -= famSize;
+			assignments[fam] = assignedDay;
+			return 0.0;
+		}
+	}
+
 	private double localMinima(final int[] assignments) {
 		double best = cost(assignments);
 		boolean improvement;
@@ -114,19 +129,12 @@ public class Main {
 						if (candidateDayCap + famSize > MAX_PPL) {
 							continue; // can not move this family to candidate day (constraint violation)
 						}
-						dayCapacities[assignedDay] -= famSize;
-						dayCapacities[candidateDay] += famSize;
-						assignments[i] = candidateDay;
-						final double candidateScore = cost(assignments);
-						if (candidateScore < best) {
-							best = candidateScore;
+						double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, best);
+						if(delta < 0.0) {
+							best += delta;
 							System.out.println("new best = " + best);
 							improvement = true;
 							break;
-						} else {
-							dayCapacities[assignedDay] += famSize;
-							dayCapacities[candidateDay] -= famSize;
-							assignments[i] = assignedDay;
 						}
 					}
 				}
@@ -137,9 +145,9 @@ public class Main {
 
 	public static void main(String[] meh) {
 		int[][] family_data = CsvReader.read("../../../data/family_data.csv");
-		int[][] starting_solution = CsvReader.read("../../../submission_71647.5625.csv");
-		//int[][] starting_solution = CsvReader.read("/tmp/lala.csv");
-		//int[][] starting_solution = CsvReader.read("../../lala.csv");
+		//int[][] starting_solution = CsvReader.read("../../../submission_71647.5625.csv");
+		int[][] starting_solution = CsvReader.read("/tmp/lala.csv");
+
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
 		for(int i = 0; i < starting_solution.length; i++) {
