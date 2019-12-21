@@ -28,7 +28,7 @@ public class CsvUtil {
 	public static void write(int[] assignments, String dst) {
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(dst));
-			writer.write("family_id,assigned_day\n")
+			writer.write("family_id,assigned_day\n");
 			for (int i = 0; i < assignments.length; i++) {
 				writer.write(i + "," + assignments[i] + "\n");
 			}
