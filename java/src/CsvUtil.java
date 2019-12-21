@@ -1,8 +1,10 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 
-public class CsvReader {
+public class CsvUtil {
 	public static int[][] read(String src) {
 		ArrayList<int[]> a = new ArrayList<>();
 		try {
@@ -21,5 +23,17 @@ public class CsvReader {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public static void write(int[] assignments, String dst) {
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(dst));
+			for (int i = 0; i < assignments.length; i++) {
+				writer.write(i + "," + assignments[i] + "\n");
+			}
+			writer.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -1,5 +1,3 @@
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.Random;
 
 import static java.lang.Math.abs;
@@ -160,15 +158,18 @@ public class Main {
 			if(score < best) {
 				best = score;
 				System.out.println("**** new best = " + best + " ****");
+				CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
+				CsvUtil.write(assignments, "../../solutions/best.csv");
 			}
 		}
 		return best;
 	}
 
 	public static void main(String[] meh) {
-		int[][] family_data = CsvReader.read("../../../data/family_data.csv");
-		int[][] starting_solution = CsvReader.read("../../../submission_71647.5625.csv");
+		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
+		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
 		//int[][] starting_solution = CsvReader.read("/tmp/lala.csv"); // 77124.66595889143
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
