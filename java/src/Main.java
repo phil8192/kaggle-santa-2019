@@ -1,3 +1,7 @@
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Random;
+
 import static java.lang.Math.abs;
 
 public class Main {
@@ -18,10 +22,11 @@ public class Main {
 	final int[][] familyPrefs;
 	final int[] familySize;
 
+	private final Random prng = new Random();
+
 	private Main(int[][] familyData, int[] initialAssignments) {
 		this.familyPrefs = new int[5000][10];
 		this.familySize = new int[5000];
-
 		this.penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE+1];
 		for (int i = 1; i < MAX_FAM_SIZE; i++) {
 			penalties[i][0] = 0;
@@ -93,14 +98,17 @@ public class Main {
 		return penalty + accounting;
 	}
 
-	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam, final int[] assignments, final double best) {
+	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam,
+												 final int[] assignments, final double best, final double t) {
+		// break and eval
 		dayCapacities[assignedDay] -= famSize;
 		dayCapacities[candidateDay] += famSize;
 		assignments[fam] = candidateDay;
 		final double candidateScore = cost(assignments);
-		if (candidateScore < best) {
+
+		if (candidateScore < best || prng.nextDouble() < t) {
 			return candidateScore - best;
-		} else {
+		} else { // fix
 			dayCapacities[assignedDay] += famSize;
 			dayCapacities[candidateDay] -= famSize;
 			assignments[fam] = assignedDay;
@@ -108,13 +116,12 @@ public class Main {
 		}
 	}
 
-	private double localMinima(final int[] assignments) {
+	private double localMinima(final int[] assignments, final double t) {
 		double best = cost(assignments);
 		boolean improvement;
 		do {
 			improvement = false;
 			for (int i = 0; i < assignments.length; i++) { // each family i
-				//System.out.println("consider family " + i);
 				final int[] prefs = familyPrefs[i];
 				final int famSize = familySize[i];
 				final int assignedDay = assignments[i];
@@ -129,10 +136,9 @@ public class Main {
 						if (candidateDayCap + famSize > MAX_PPL) {
 							continue; // can not move this family to candidate day (constraint violation)
 						}
-						double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, best);
+						final double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, best, t);
 						if(delta < 0.0) {
 							best += delta;
-							System.out.println("new best = " + best);
 							improvement = true;
 							break;
 						}
@@ -143,10 +149,26 @@ public class Main {
 		return best;
 	}
 
+	private double optimise(final int[] assignments) {
+		double best = localMinima(assignments, 0);
+		System.out.println("best = " + best);
+		for(int i = 0; i < 10000; i++) {
+
+			localMinima(assignments, 0.00001);
+			double score = localMinima(assignments, 0);
+
+			if(score < best) {
+				best = score;
+				System.out.println("**** new best = " + best + " ****");
+			}
+		}
+		return best;
+	}
+
 	public static void main(String[] meh) {
 		int[][] family_data = CsvReader.read("../../../data/family_data.csv");
-		//int[][] starting_solution = CsvReader.read("../../../submission_71647.5625.csv");
-		int[][] starting_solution = CsvReader.read("/tmp/lala.csv");
+		int[][] starting_solution = CsvReader.read("../../../submission_71647.5625.csv");
+		//int[][] starting_solution = CsvReader.read("/tmp/lala.csv"); // 77124.66595889143
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
@@ -154,7 +176,8 @@ public class Main {
 			initialAsignments[i] = starting_solution[i][1];
 		}
 		Main main = new Main(family_data, initialAsignments);
-		double score = main.localMinima(initialAsignments);
+		//double score = main.localMinima(initialAsignments);
+		double score = main.optimise(initialAsignments);
 		System.out.println("minima = " + score);
 	}
 }
