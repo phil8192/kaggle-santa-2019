@@ -1,3 +1,4 @@
+/* h0 h0 h0 */
 import java.util.Arrays;
 import java.util.Random;
 
@@ -21,7 +22,7 @@ public class Main {
 	final int[][] familyPrefs;
 	final int[] familySize;
 
-	private final Random prng = new Random();
+		private final Random prng = new Random();
 
 	private Main(int[][] familyData, int[] initialAssignments) {
 		this.familyPrefs = new int[5000][10];
@@ -77,21 +78,28 @@ public class Main {
 		return accountingCost[now][pre];
 	}
 
-	private double cost(final int[] familyAssignments) {
+	private double getPenalty(final int[] familyAssignments) {
 		double penalty = 0.0;
-		double accounting = 0.0;
-		// day assignment penalty
 		for (int i = 0, len = familyAssignments.length; i < len; i++) {
 			final int day = familyAssignments[i];
 			penalty += allPenalties[i][day];
 		}
-		// accounting penalty
+		return penalty;
+	}
+
+	private double getAccountingCost() {
+		double accounting = 0.0;
 		// first day is special
 		accounting += getAccountingCost(dayCapacities[100], dayCapacities[100]);
-		// rest of days starting at day 99
 		for (int i = 100; --i > 0; ) {
 			accounting += getAccountingCost(dayCapacities[i], dayCapacities[i + 1]);
 		}
+		return accounting;
+	}
+
+	private double cost(final int[] familyAssignments) {
+		final double penalty = getPenalty(familyAssignments);
+		final double accounting = getAccountingCost();
 		return penalty + accounting;
 	}
 
@@ -101,20 +109,94 @@ public class Main {
 		return Math.exp(-d / temperature);
 	}
 
-	private double fastCost(final int assignedDay, final int candidateDay, final int famSize, final int fam,
-													final int[] assignments, final double best) {
-		// todo: cost based on delta
-		return cost(assignments);
+	// the amount that assignedDay contributes to the accounting cost.
+	private double getAssignedAccountingDelta(final int assignedDay, final int famSize) {
+		final double ac1; // how it is.
+		final double ac2; // how it is *without* family.
+		if(assignedDay == 1) {
+			ac1 = getAccountingCost(dayCapacities[1], dayCapacities[2]);
+			ac2 = getAccountingCost(dayCapacities[1] - famSize, dayCapacities[2]);
+		} else if(assignedDay == 100) {
+			ac1 = getAccountingCost(dayCapacities[99], dayCapacities[100]) + getAccountingCost(dayCapacities[100], dayCapacities[100]);
+			ac2 = getAccountingCost(dayCapacities[99], dayCapacities[100] - famSize) + getAccountingCost(dayCapacities[100] - famSize, dayCapacities[100] - famSize);
+		} else {
+			final int nextDayCap = dayCapacities[assignedDay - 1];
+			final int currDayCap = dayCapacities[assignedDay];
+			final int prevDayCap = dayCapacities[assignedDay + 1];
+			final int propDayCap = currDayCap - famSize;
+			ac1 = getAccountingCost(nextDayCap, currDayCap) + getAccountingCost(currDayCap, prevDayCap);
+			ac2 = getAccountingCost(nextDayCap, propDayCap) + getAccountingCost(propDayCap, prevDayCap);
+		}
+		return Math.abs(ac1 - ac2);
 	}
 
-	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam,
-												 final int[] assignments, final double best, final double temperature) {
+	// the amount that candidateDay will contribute to the accounting cost.
+	private double getCandidateAccountingDelta(final int assignedDay, final int candidateDay, final int famSize) {
+		final double ac1; // how it is
+		final double ac2; // how it is *with* family.
+
+		if(candidateDay == 1) {
+			ac1 = getAccountingCost(dayCapacities[1], dayCapacities[2] - (candidateDay+1 == assignedDay ? famSize : 0));
+			ac2 = getAccountingCost(dayCapacities[1]+famSize, dayCapacities[2] - (candidateDay+1 == assignedDay ? famSize : 0));
+		} else if(candidateDay == 100) {
+			ac1 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100]) + getAccountingCost(dayCapacities[100], dayCapacities[100]);
+			ac2 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100] + famSize) + getAccountingCost(dayCapacities[100]+famSize, dayCapacities[100]+famSize);
+		} else {
+			final int nextDayCap = dayCapacities[candidateDay - 1] - (candidateDay-1 == assignedDay ? famSize : 0);
+			final int currDayCap = dayCapacities[candidateDay];
+			final int prevDayCap = dayCapacities[candidateDay + 1] - (candidateDay+1 == assignedDay ? famSize : 0);
+			final int propDayCap = currDayCap + famSize;
+			ac1 = getAccountingCost(nextDayCap, currDayCap) + getAccountingCost(currDayCap, prevDayCap);
+			ac2 = getAccountingCost(nextDayCap, propDayCap) + getAccountingCost(propDayCap, prevDayCap);
+		}
+		return Math.abs(ac1 - ac2);
+	}
+
+	private double costDelta(final int assignedDay, final int candidateDay, final int famSize, final int fam, final int[] assignments) {
+//	penalty delta
+		final double assignedPenalty = allPenalties[fam][assignedDay];
+		final double candidatePenalty = allPenalties[fam][candidateDay];
+		final double penaltyDelta = candidatePenalty - assignedPenalty;
+
+//		double before = getPenalty(assignments);
+//		assignments[fam] = candidateDay;
+//		double after = getPenalty(assignments);
+//		double penaltyDelta = after - before;
+//		assignments[fam] = assignedDay;
+
+//		// accounting delta
+//		final double ac1 = getAssignedAccountingDelta(assignedDay, famSize); // how much accounting cost will be removed
+//		final double ac2 = getCandidateAccountingDelta(assignedDay, candidateDay, famSize); // how much accounting cost will be added
+//		final double accountingDelta = ac2 - ac1;
+
+		double before = getAccountingCost();
+		dayCapacities[assignedDay] -= famSize;
+		dayCapacities[candidateDay] += famSize;
+		double after = getAccountingCost();
+		double accountingDelta = after - before;
+		dayCapacities[assignedDay] += famSize;
+		dayCapacities[candidateDay] -= famSize;
+
+		return penaltyDelta + accountingDelta;
+
+//		double before = cost(assignments);
+//		dayCapacities[assignedDay] -= famSize;
+//		dayCapacities[candidateDay] += famSize;
+//		assignments[fam] = candidateDay;
+//		double after = cost(assignments);
+//		dayCapacities[assignedDay] += famSize;
+//		dayCapacities[candidateDay] -= famSize;
+//		assignments[fam] = assignedDay;
+//		return after - before;
+	}
+
+	private double tryMoveSlow(final int assignedDay, final int candidateDay, final int famSize, final int fam,
+														 final int[] assignments, final double best, final double temperature) {
 		// break and eval
 		dayCapacities[assignedDay] -= famSize;
 		dayCapacities[candidateDay] += famSize;
 		assignments[fam] = candidateDay;
-		final double candidateScore = fastCost(assignedDay, candidateDay, famSize, fam, assignments, best);
-
+		final double candidateScore = cost(assignments);
 		if (candidateScore < best || acceptanceProbability(best, candidateScore, temperature) >= prng.nextDouble()) {
 			return candidateScore - best;
 		} else { // fix
@@ -125,9 +207,23 @@ public class Main {
 		}
 	}
 
+	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam,
+												 final int[] assignments, final double best, final double temperature) {
+		final double delta = costDelta(assignedDay, candidateDay, famSize, fam, assignments);
+		final double candidateScore = best + delta;
+		//System.out.println("candidate score = " +candidateScore+ " delta = " + delta + " ass day = " + assignedDay + " can day = " + candidateDay);
+		if (candidateScore < best || acceptanceProbability(best, candidateScore, temperature) >= prng.nextDouble()) {
+			dayCapacities[assignedDay] -= famSize;
+			dayCapacities[candidateDay] += famSize;
+			assignments[fam] = candidateDay;
+			return delta;
+		} else {
+			return Double.MAX_VALUE;
+		}
+	}
+
 	private double localMinima(final int[] assignments, final double temperature) {
-		double best = cost(assignments);
-		System.out.println(best);
+		double current = cost(assignments);
 		boolean improvement;
 		do {
 			improvement = false;
@@ -142,15 +238,20 @@ public class Main {
 						if (candidateDay != assignedDay) {
 							final int candidateDayCap = dayCapacities[candidateDay];
 							if (candidateDayCap + famSize <= MAX_PPL) {
-								final double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, best, temperature);
+								final double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, current, temperature);
 								if (delta < 0.0) {
-									best += delta;
-									System.out.println(best);
+									current += delta;
+									if(Math.abs(current - cost(assignments)) > 0.00001) {
+										System.out.println("current = " + current + " actual cost = " + cost(assignments));
+										System.exit(0);
+									}
+									System.out.println(String.format("%.2f", current));
 									improvement = true;
 									i = 0; // todo: don't look bits
 									break; // start from family 0 again
 								}
 								if (delta >= 0.0 && delta < Double.MAX_VALUE) {
+									current += delta;
 									break; // family was moved, move on to next family
 								}
 							}
@@ -159,7 +260,7 @@ public class Main {
 				}
 			}
 		} while (improvement);
-		return best;
+		return current;
 	}
 
 	private void sanity(int[] assignments) {
@@ -185,16 +286,16 @@ public class Main {
 
 	private double optimise(final int[] assignments) {
 		double temperature = 10;
-		double coolingSchedule = 0.99;
+		double coolingSchedule = 0.999;
 		double best = localMinima(assignments, 0);
-		System.out.println("best = " + best);
+		System.out.println("best = " + String.format("%.2f", best));
 		for (int i = 0; i < 10000; i++) {
 			localMinima(assignments, temperature);
 			double score = localMinima(assignments, 0);
 			if (score < best) {
 				best = score;
 				sanity(assignments);
-				System.out.println("**** new best = " + best + " ****");
+				System.out.println("**** new best = " + String.format("%.2f", best) + " ****");
 				CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
 				CsvUtil.write(assignments, "../../solutions/best.csv");
 			}
