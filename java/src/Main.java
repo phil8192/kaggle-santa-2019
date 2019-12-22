@@ -74,10 +74,6 @@ public class Main {
 	}
 
 	private double getAccountingCost(final int now, final int pre) {
-		//int diff = abs(now - pre);
-		//return ((now - 125) / 400.0) * Math.pow(now, 0.5 + (diff / 50.0));
-		//assert now >= 125 && now <= 300;
-		//assert pre >= 125 && pre <= 300;
 		return accountingCost[now][pre];
 	}
 
@@ -99,20 +95,21 @@ public class Main {
 		return penalty + accounting;
 	}
 
+	private double acceptanceProbability(final double oldScore, final double newScore, final double temperature) {
+		final double d = newScore - oldScore;
+		// less damaging moves have higher probability
+		return Math.exp(-d / temperature);
+	}
+
 	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam,
-												 final int[] assignments, final double best, final double t) {
-//		if(assignments[fam] != assignedDay) {
-//			throw new RuntimeException("assigned day mismatch! " + assignments[fam] + " != " + assignedDay);
-//		}
+												 final int[] assignments, final double best, final double temperature) {
 		// break and eval
 		dayCapacities[assignedDay] -= famSize;
 		dayCapacities[candidateDay] += famSize;
 		assignments[fam] = candidateDay;
 		final double candidateScore = cost(assignments);
 
-		if (candidateScore < best || prng.nextDouble() < t) {
-//			System.out.println("tryMove famSize = " + famSize + " ass day = " + assignedDay + " can day = " + candidateDay + " best = " + best + " candidate score = " + candidateScore);
-//			sanity(assignments);
+		if (candidateScore < best || acceptanceProbability(best, candidateScore, temperature) >= prng.nextDouble()) {
 			return candidateScore - best;
 		} else { // fix
 			dayCapacities[assignedDay] += famSize;
@@ -122,7 +119,7 @@ public class Main {
 		}
 	}
 
-	private double localMinima(final int[] assignments, final double t) {
+	private double localMinima(final int[] assignments, final double temperature) {
 		double best = cost(assignments);
 		System.out.println(best);
 		boolean improvement;
@@ -139,23 +136,15 @@ public class Main {
 						if (candidateDay != assignedDay) {
 							final int candidateDayCap = dayCapacities[candidateDay];
 							if (candidateDayCap + famSize <= MAX_PPL) {
-								//System.out.println("ass day = " + assignedDay + " can day = " + candidateDay +" assigned day cap = " + assignedDayCap + " candidate day cap = " + candidateDayCap + " famSize = " + famSize);
-
-								final double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, best, t);
-
+								final double delta = tryMove(assignedDay, candidateDay, famSize, i, assignments, best, temperature);
 								if (delta < 0.0) {
-//									System.out.println(best + " + " + delta);
 									best += delta;
-//									if (cost(assignments) != best) {
-//										System.err.println("invalid best score!");
-//										System.exit(0);
-//									}
 									System.out.println(best);
 									improvement = true;
-									i = 0;
+									i = 0; // todo: don't look bits
 									break; // start from family 0 again
 								}
-								if(delta > 0.0) {
+								if (delta > 0.0) {
 									break; // family was moved, move on to next family
 								}
 							}
@@ -175,7 +164,7 @@ public class Main {
 		}
 		for (int i = 1; i < dayCaps.length; i++) {
 			int cap = dayCaps[i];
-			if(cap != dayCapacities[i] ) {
+			if (cap != dayCapacities[i]) {
 				throw new RuntimeException("day " + i + " cap inconsistency:\n" +
 						Arrays.toString(dayCapacities) + " !=\n" + Arrays.toString(dayCaps));
 			}
@@ -189,35 +178,29 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
+		double temperature = 10;
+		double coolingSchedule = 0.9999999;
 		double best = localMinima(assignments, 0);
 		System.out.println("best = " + best);
 		for (int i = 0; i < 10000; i++) {
-
-			localMinima(assignments, 0.00001);
+			localMinima(assignments, temperature);
 			double score = localMinima(assignments, 0);
-
-//			if(score != cost(assignments)) {
-//				System.err.println("invalid score!");
-//				System.exit(1);
-//			}
-
 			if (score < best) {
 				best = score;
-
-					sanity(assignments);
-					System.out.println("**** new best = " + best + " ****");
-					CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
-					CsvUtil.write(assignments, "../../solutions/best.csv");
-
+				sanity(assignments);
+				System.out.println("**** new best = " + best + " ****");
+				CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
+				CsvUtil.write(assignments, "../../solutions/best.csv");
 			}
+			temperature *= coolingSchedule;
 		}
 		return best;
 	}
 
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
-		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
-		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
+		int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
+		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
 		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 		//int[][] starting_solution = CsvUtil.read("../../solutions/bad.csv"); //  1725999432440170
 
@@ -232,10 +215,10 @@ public class Main {
 		Main main = new Main(family_data, initialAsignments);
 		//System.out.println(main.cost(initialAsignments));
 
-		double score = main.localMinima(initialAsignments, 0);
-		System.out.println(score);
+		//double score = main.localMinima(initialAsignments, 0);
+		//System.out.println(score);
 		//CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		//double score = main.optimise(initialAsignments);
-		//System.out.println("minima = " + score);
+		double score = main.optimise(initialAsignments);
+		System.out.println("minima = " + score);
 	}
 }
