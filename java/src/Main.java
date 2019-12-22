@@ -101,13 +101,19 @@ public class Main {
 		return Math.exp(-d / temperature);
 	}
 
+	private double fastCost(final int assignedDay, final int candidateDay, final int famSize, final int fam,
+													final int[] assignments, final double best) {
+		// todo: cost based on delta
+		return cost(assignments);
+	}
+
 	private double tryMove(final int assignedDay, final int candidateDay, final int famSize, final int fam,
 												 final int[] assignments, final double best, final double temperature) {
 		// break and eval
 		dayCapacities[assignedDay] -= famSize;
 		dayCapacities[candidateDay] += famSize;
 		assignments[fam] = candidateDay;
-		final double candidateScore = cost(assignments);
+		final double candidateScore = fastCost(assignedDay, candidateDay, famSize, fam, assignments, best);
 
 		if (candidateScore < best || acceptanceProbability(best, candidateScore, temperature) >= prng.nextDouble()) {
 			return candidateScore - best;
@@ -179,7 +185,7 @@ public class Main {
 
 	private double optimise(final int[] assignments) {
 		double temperature = 10;
-		double coolingSchedule = 0.9999999;
+		double coolingSchedule = 0.99;
 		double best = localMinima(assignments, 0);
 		System.out.println("best = " + best);
 		for (int i = 0; i < 10000; i++) {
