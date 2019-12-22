@@ -171,14 +171,14 @@ public class Main {
 		for (int i = 1; i < dayCaps.length; i++) {
 			int cap = dayCaps[i];
 			if (cap != dayCapacities[i]) {
-				throw new RuntimeException("day " + i + " cap inconsistency:\n" +
+				System.err.println("day " + i + " cap inconsistency:\n" +
 						Arrays.toString(dayCapacities) + " !=\n" + Arrays.toString(dayCaps));
 			}
 			if (cap < MIN_PPL) {
-				throw new RuntimeException("cap " + cap + " < " + MIN_PPL);
+				System.err.println("cap " + cap + " < " + MIN_PPL);
 			}
 			if (cap > MAX_PPL) {
-				throw new RuntimeException("cap " + cap + " > " + MAX_PPL);
+				System.err.println("cap " + cap + " > " + MAX_PPL);
 			}
 		}
 	}
