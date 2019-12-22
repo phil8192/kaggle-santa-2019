@@ -121,7 +121,7 @@ public class Main {
 			dayCapacities[assignedDay] += famSize;
 			dayCapacities[candidateDay] -= famSize;
 			assignments[fam] = assignedDay;
-			return 0.0;
+			return Double.MAX_VALUE;
 		}
 	}
 
@@ -150,7 +150,7 @@ public class Main {
 									i = 0; // todo: don't look bits
 									break; // start from family 0 again
 								}
-								if (delta > 0.0) {
+								if (delta >= 0.0 && delta < Double.MAX_VALUE) {
 									break; // family was moved, move on to next family
 								}
 							}
@@ -205,9 +205,9 @@ public class Main {
 
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
-		int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
+		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
 		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 		//int[][] starting_solution = CsvUtil.read("../../solutions/bad.csv"); //  1725999432440170
 
 		// 71757.52
