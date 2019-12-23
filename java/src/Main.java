@@ -292,8 +292,10 @@ public class Main {
 	}
 
 	private double scan(final Integer[] fams, final int[] assignments, final int maxChoice, final double current) {
+		final double origPenalty = getPenalty(assignments);
 
 		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
+		double penaltyDelta = 0.0;
 
 		// stash the original assignments
 		final int[] original = new int[fams.length];
@@ -316,10 +318,15 @@ public class Main {
 				dayCapacities[assignedDay] -= famSize;
 				dayCapacities[candidateDay] += famSize;
 				assignments[fam] = candidateDay;
+
+				penaltyDelta += getPenaltyDelta(fam, assignedDay, candidateDay);
+
 			}
 			// if no constraint violation and improvement, return improvement delta
 			if (checkCapacityConstraints()) {
-				final double candidateCost = cost(assignments);
+				// expensive -> final double candidateCost = cost(assignments);
+				final double accountingCost = getAccountingCost();
+				final double candidateCost = (origPenalty+penaltyDelta) + accountingCost;
 				final double delta = candidateCost - current;
 				if (delta < 0) {
 					return delta;
@@ -356,7 +363,7 @@ public class Main {
 				}
 			}
 		} while(improvement);
-		return 0;
+		return score - current;
 	}
 
 	private double randomBrute(final int[] assignments, final int fams, final int maxChoice, final double current) {
@@ -411,10 +418,10 @@ public class Main {
 
 		double score = main.cost(initialAsignments);
 		// 10 million rounds of random brute force.
-		double bruteDiff = main.brute(initialAsignments, 2, 3, score);
-		if(bruteDiff < 0) {
-			CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		}
+		double bruteDiff = main.brute(initialAsignments, 2, 4, score);
+		//if(bruteDiff < 0) {
+		//	CsvUtil.write(initialAsignments, "/tmp/x.csv");
+		//}
 		System.out.println("score = " + (score + bruteDiff));
 
 	}
