@@ -263,11 +263,11 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		double temperature = 10;
-		double coolingSchedule = 0.999999;
+		double temperature = 5;
+		double coolingSchedule = 0.9999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
-		for (int i = 0; i < 100000000; i++) {
+		while(temperature > 0.001) {
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
 			System.out.println(String.format("%.2f", score) + " T = " + String.format("%.6f", temperature));
@@ -287,7 +287,7 @@ public class Main {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
 		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		int[][] starting_solution = CsvUtil.read("../../best.csv");
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 
 
 		// 71757.52

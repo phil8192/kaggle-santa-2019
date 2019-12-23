@@ -1,7 +1,6 @@
 import java.util.List;
 import java.util.ArrayList;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
 
 public class Cartisian {
 	public static List<List<Integer>> product(final int fams, final int maxChoice) {
