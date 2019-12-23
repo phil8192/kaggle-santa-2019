@@ -7,6 +7,17 @@ import java.util.Random;
 import static java.lang.Math.abs;
 
 public class Main {
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_BLACK = "\u001B[30m";
+	public static final String ANSI_RED = "\u001B[31m";
+	public static final String ANSI_GREEN = "\u001B[32m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
+	public static final String ANSI_BLUE = "\u001B[34m";
+	public static final String ANSI_PURPLE = "\u001B[35m";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	public static final String ANSI_WHITE = "\u001B[37m";
+
+
 	private static final int MAX_FAM_SIZE = 10;
 	private static final int MAX_CHOICE = 10;
 	private static final int MIN_PPL = 125;
@@ -237,6 +248,8 @@ public class Main {
 
 	private double brute(final int[] assignments, final int fams, final int maxChoice, final double current) {
 
+		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
+
 		// get list of random family indices
 		final Integer[] randomFams = prng.ints(0, 5000)
 				.boxed()
@@ -310,8 +323,10 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
+		//double temperature = 5;
+		//double coolingSchedule = 0.9999999;
 		double temperature = 5;
-		double coolingSchedule = 0.9999999;
+		double coolingSchedule = 0.99999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
 		while (temperature > 0.001) {
@@ -333,12 +348,13 @@ public class Main {
 	private double brute(final int rounds, final int[] assignments, final int fams, final int maxChoice, final double score) {
 		double current = score;
 		for (int i = 0; i < rounds; i++) {
-			final double delta = brute(assignments, fams, maxChoice, current);
-			System.out.println("brute round = " + i + " (" + String.format("%.2f", current) + ")");
+			final double delta = brute(assignments, 1 + prng.nextInt(fams), maxChoice, current);
+			System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
 			if (delta < 0) {
 				current += delta;
 				//System.out.println("**** new brute score = " + current + "****");
 				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", current) + ".csv");
+				CsvUtil.write(assignments, "../../solutions/best.csv");
 			}
 		}
 		return current - score;
@@ -348,7 +364,7 @@ public class Main {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
 		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		int[][] starting_solution = CsvUtil.read("../../solutions/70578.36.csv");
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 
 
 		// 71757.52
@@ -367,10 +383,12 @@ public class Main {
 		//System.out.println(System.currentTimeMillis() - l + "ms.");
 		//System.out.println(score);
 		//CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		//double score = main.optimise(initialAsignments);
+		//main.optimise(initialAsignments);
+
 		double score = main.cost(initialAsignments);
-		double bruteDiff = main.brute(1000000, initialAsignments, 4, 4, score);
-		System.out.println("score = " + score+bruteDiff);
+		// 10 million rounds of random brute force.
+		double bruteDiff = main.brute(10000000, initialAsignments, 6, 4, score);
+		System.out.println("score = " + score + bruteDiff);
 
 	}
 }
