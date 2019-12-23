@@ -166,7 +166,6 @@ public class Main {
 	}
 
 	private double localMinima(final int[] assignments, final double temperature, final int maxLoops) {
-		//double current = cost(assignments);
 		double currentPenalty = getPenalty(assignments);
 		double currentAccount = getAccountingCost();
 		double current = currentPenalty + currentAccount;
@@ -191,7 +190,7 @@ public class Main {
 								final double delta = penaltyDelta + accountDelta;
 
 								final double candidateScore = current + delta;
-								if (candidateScore < current || acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble()) {
+								if (candidateScore < current || (maxLoops > 0 && acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble())) {
 									dayCapacities[assignedDay] -= famSize;
 									dayCapacities[candidateDay] += famSize;
 									assignments[i] = candidateDay;
@@ -201,7 +200,7 @@ public class Main {
 									currentAccount += accountDelta;
 
 //									final double sanity = cost(assignments) - current;
-//									if(Math.abs(sanity) >= 0.000000001) {
+//									if(Math.abs(sanity) >= 0.00001) {
 //										System.out.println(current + " != " + cost(assignments));
 //										System.exit(1);
 //									}
@@ -248,7 +247,7 @@ public class Main {
 
 	private double optimise(final int[] assignments) {
 		double temperature = 5;
-		double coolingSchedule = 0.99999;
+		double coolingSchedule = 0.99999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
 		for (int i = 0; i < 100000000; i++) {
@@ -270,8 +269,8 @@ public class Main {
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
-		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 
 
 		// 71757.52
@@ -285,12 +284,12 @@ public class Main {
 		Main main = new Main(family_data, initialAsignments);
 		//System.out.println(main.cost(initialAsignments));
 
-		final long l = System.currentTimeMillis();
-		double score = main.localMinima(initialAsignments, 0, 0);
-		System.out.println(System.currentTimeMillis() - l + "ms.");
-		System.out.println(score);
+		//final long l = System.currentTimeMillis();
+		//double score = main.localMinima(initialAsignments, 0, 0);
+		//System.out.println(System.currentTimeMillis() - l + "ms.");
+		//System.out.println(score);
 		//CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		//double score = main.optimise(initialAsignments);
+		double score = main.optimise(initialAsignments);
 		System.out.println("minima = " + score);
 	}
 }
