@@ -11,24 +11,23 @@ public class Main {
 	private static final int MIN_PPL = 125;
 	private static final int MAX_PPL = 300;
 
-	private final double[][] penalties;
 	private final double[][] accountingCost;
 
 	private final int[] dayCapacities;
 
 	// all family penalties
 	// 5000*100
-	final double[][] allPenalties;
+	private final double[][] allPenalties;
 
-	final int[][] familyPrefs;
-	final int[] familySize;
+	private final int[][] familyPrefs;
+	private final int[] familySize;
 
 	private final Random prng = new Random();
 
 	private Main(int[][] familyData, int[] initialAssignments) {
 		this.familyPrefs = new int[5000][10];
 		this.familySize = new int[5000];
-		this.penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE + 1];
+		double[][] penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE + 1];
 		for (int i = 1; i < MAX_FAM_SIZE; i++) {
 			penalties[i][0] = 0;
 			penalties[i][1] = 50;
@@ -224,6 +223,10 @@ public class Main {
 		return current;
 	}
 
+	private double brute(final int[] assignments) {
+
+	}
+
 	private void sanity(int[] assignments) {
 		int[] dayCaps = new int[100 + 1];
 		for (int i = 0; i < assignments.length; i++) {
@@ -246,14 +249,14 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		double temperature = 5;
-		double coolingSchedule = 0.99999999;
+		double temperature = 10;
+		double coolingSchedule = 0.999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
 		for (int i = 0; i < 100000000; i++) {
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
-			System.out.println("score " + score);
+			System.out.println(String.format("%.2f", score) + " T = " + String.format("%.6f", temperature));
 			if (score < best) {
 				best = score;
 				sanity(assignments);
@@ -269,8 +272,8 @@ public class Main {
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
-		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
+		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
 
 
 		// 71757.52
