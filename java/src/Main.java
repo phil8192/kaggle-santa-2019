@@ -224,20 +224,66 @@ public class Main {
 		return current;
 	}
 
-	private double brute(final int[] assignments, final int fams, final int maxChoice) {
+	private boolean checkCapacityConstraints() {
+		for(int i = 1; i < dayCapacities.length; i++) {
+			final int cap = dayCapacities[i];
+			if(cap < MIN_PPL || cap > MAX_PPL) {
+				return false; // violation!
+			}
+		}
+		return true;
+	}
+
+	private double brute(final int[] assignments, final int fams, final int maxChoice, final double current) {
+
+		// get list of random family indices
 		final Integer[] randomFams = prng.ints(0, 5000)
 				.boxed()
 				.distinct()
 				.limit(fams)
 				.toArray(Integer[]::new);
-		List<List<Integer>> prods = Cartisian.product(fams, maxChoice);
-		for(final List<Integer> prod : prods) {
-			// try to move all families into this configuration (reject if any constraint violation)
 
-			// evaluate..
-			// if improve, return
+		// stash the original assignments
+		final int[] original = new int[fams];
+		for(int i = 0; i < fams; i++) {
+			original[i] = assignments[randomFams[i]];
 		}
-		// reset to original state.
+
+		// try all possible configurations
+		final List<List<Integer>> prods = Cartisian.product(fams, maxChoice);
+		for(final List<Integer> prod : prods) {
+			for(int i = 0; i < fams; i++) {
+				final int fam = randomFams[i];
+				final int famSize = familySize[fam];
+				final int choice = prod.get(i);
+				final int assignedDay = assignments[fam];
+				final int candidateDay = familyPrefs[fam][choice];
+
+				// assign this family
+				dayCapacities[assignedDay] -= famSize;
+				dayCapacities[candidateDay] += famSize;
+				assignments[i] = candidateDay;
+			}
+
+			// if no constraint violation and improvement, return improvement delta
+			if(checkCapacityConstraints()) {
+				final double candidateCost = cost(assignments);
+				final double delta = candidateCost - current;
+				if(delta < 0) {
+					return delta;
+				}
+			}
+		}
+		// no improvement found. reset back to original
+		for(int i = 0; i < original.length; i++) {
+			final int fam = randomFams[i];
+			final int famSize = familySize[fam];
+			final int assignedDay = assignments[fam];
+			final int originalDay = original[i];
+			dayCapacities[assignedDay] -= famSize;
+			dayCapacities[originalDay] += famSize;
+			assignments[i] = originalDay;
+		}
 		return 0;
 	}
 
