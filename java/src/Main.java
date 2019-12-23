@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.random;
 
 public class Main {
 	public static final String ANSI_RESET = "\u001B[0m";
@@ -83,6 +84,27 @@ public class Main {
 			int day = initialAssignments[i];
 			int famSize = familySize[i];
 			dayCapacities[day] += famSize;
+		}
+	}
+
+	private void sanity(int[] assignments) {
+		int[] dayCaps = new int[100 + 1];
+		for (int i = 0; i < assignments.length; i++) {
+			int assignment = assignments[i];
+			dayCaps[assignment] += familySize[i];
+		}
+		for (int i = 1; i < dayCaps.length; i++) {
+			int cap = dayCaps[i];
+			if (cap != dayCapacities[i]) {
+				System.err.println("day " + i + " cap inconsistency:\n" +
+						Arrays.toString(dayCapacities) + " !=\n" + Arrays.toString(dayCaps));
+			}
+			if (cap < MIN_PPL) {
+				System.err.println("cap " + cap + " < " + MIN_PPL);
+			}
+			if (cap > MAX_PPL) {
+				System.err.println("cap " + cap + " > " + MAX_PPL);
+			}
 		}
 	}
 
@@ -236,92 +258,6 @@ public class Main {
 		return current;
 	}
 
-	private boolean checkCapacityConstraints() {
-		for (int i = 1; i < dayCapacities.length; i++) {
-			final int cap = dayCapacities[i];
-			if (cap < MIN_PPL || cap > MAX_PPL) {
-				return false; // violation!
-			}
-		}
-		return true;
-	}
-
-	private double brute(final int[] assignments, final int fams, final int maxChoice, final double current) {
-
-		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
-
-		// get list of random family indices
-		final Integer[] randomFams = prng.ints(0, 5000)
-				.boxed()
-				.distinct()
-				.limit(fams)
-				.toArray(Integer[]::new);
-
-		// stash the original assignments
-		final int[] original = new int[fams];
-		for (int i = 0; i < fams; i++) {
-			original[i] = assignments[randomFams[i]];
-		}
-
-		// try all possible configurations
-		final List<List<Integer>> prods = Cartisian.product(fams, maxChoice);
-		for (final List<Integer> prod : prods) {
-			//System.out.println(prod);
-			for (int i = 0; i < fams; i++) {
-				final int fam = randomFams[i];
-				final int famSize = familySize[fam];
-				final int choice = prod.get(i);
-				final int assignedDay = assignments[fam];
-				final int candidateDay = familyPrefs[fam][choice];
-
-				// assign this family
-				dayCapacities[assignedDay] -= famSize;
-				dayCapacities[candidateDay] += famSize;
-				assignments[fam] = candidateDay;
-			}
-			// if no constraint violation and improvement, return improvement delta
-			if (checkCapacityConstraints()) {
-				final double candidateCost = cost(assignments);
-				final double delta = candidateCost - current;
-				if (delta < 0) {
-					return delta;
-				}
-			}
-		}
-		// no improvement found. reset back to original
-		for (int i = 0; i < original.length; i++) {
-			final int fam = randomFams[i];
-			final int famSize = familySize[fam];
-			final int assignedDay = assignments[fam];
-			final int originalDay = original[i];
-			dayCapacities[assignedDay] -= famSize;
-			dayCapacities[originalDay] += famSize;
-			assignments[fam] = originalDay;
-		}
-		return 0;
-	}
-
-	private void sanity(int[] assignments) {
-		int[] dayCaps = new int[100 + 1];
-		for (int i = 0; i < assignments.length; i++) {
-			int assignment = assignments[i];
-			dayCaps[assignment] += familySize[i];
-		}
-		for (int i = 1; i < dayCaps.length; i++) {
-			int cap = dayCaps[i];
-			if (cap != dayCapacities[i]) {
-				System.err.println("day " + i + " cap inconsistency:\n" +
-						Arrays.toString(dayCapacities) + " !=\n" + Arrays.toString(dayCaps));
-			}
-			if (cap < MIN_PPL) {
-				System.err.println("cap " + cap + " < " + MIN_PPL);
-			}
-			if (cap > MAX_PPL) {
-				System.err.println("cap " + cap + " > " + MAX_PPL);
-			}
-		}
-	}
-
 	private double optimise(final int[] assignments) {
 		//double temperature = 5;
 		//double coolingSchedule = 0.9999999;
@@ -345,10 +281,98 @@ public class Main {
 		return best;
 	}
 
-	private double brute(final int rounds, final int[] assignments, final int fams, final int maxChoice, final double score) {
+	private boolean checkCapacityConstraints() {
+		for (int i = 1; i < dayCapacities.length; i++) {
+			final int cap = dayCapacities[i];
+			if (cap < MIN_PPL || cap > MAX_PPL) {
+				return false; // violation!
+			}
+		}
+		return true;
+	}
+
+	private double scan(final Integer[] fams, final int[] assignments, final int maxChoice, final double current) {
+
+		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
+
+		// stash the original assignments
+		final int[] original = new int[fams.length];
+		for (int i = 0; i < fams.length; i++) {
+			original[i] = assignments[fams[i]];
+		}
+
+		// try all possible configurations
+		final List<List<Integer>> prods = Cartisian.product(fams.length, maxChoice);
+		for (final List<Integer> prod : prods) {
+			//System.out.println(prod);
+			for (int i = 0; i < fams.length; i++) {
+				final int fam = fams[i];
+				final int famSize = familySize[fam];
+				final int choice = prod.get(i);
+				final int assignedDay = assignments[fam];
+				final int candidateDay = familyPrefs[fam][choice];
+
+				// assign this family
+				dayCapacities[assignedDay] -= famSize;
+				dayCapacities[candidateDay] += famSize;
+				assignments[fam] = candidateDay;
+			}
+			// if no constraint violation and improvement, return improvement delta
+			if (checkCapacityConstraints()) {
+				final double candidateCost = cost(assignments);
+				final double delta = candidateCost - current;
+				if (delta < 0) {
+					return delta;
+				}
+			}
+		}
+		// no improvement found. reset back to original
+		for (int i = 0; i < original.length; i++) {
+			final int fam = fams[i];
+			final int famSize = familySize[fam];
+			final int assignedDay = assignments[fam];
+			final int originalDay = original[i];
+			dayCapacities[assignedDay] -= famSize;
+			dayCapacities[originalDay] += famSize;
+			assignments[fam] = originalDay;
+		}
+		return 0;
+	}
+
+	private double brute(final int[] assignments, final int fams, final int maxChoice, final double current) {
+		double score = current;
+		boolean improvement;
+		List<List<Integer>> famCombos = Cartisian.product(fams, 5000);
+		do {
+			improvement = false;
+			for (final List<Integer> combo : famCombos) {
+				final Integer[] famIndices = combo.toArray(new Integer[]{});
+				final double delta = scan(famIndices, assignments, maxChoice, current);
+				System.out.println(Arrays.toString(famIndices));
+				if (delta < 0) {
+					score += delta;
+					improvement = true;
+					CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + ".csv");
+				}
+			}
+		} while(improvement);
+		return 0;
+	}
+
+	private double randomBrute(final int[] assignments, final int fams, final int maxChoice, final double current) {
+		// get list of random family indices
+		final Integer[] randomFams = prng.ints(0, 5000)
+				.boxed()
+				.distinct()
+				.limit(fams)
+				.toArray(Integer[]::new);
+		return scan(randomFams, assignments, maxChoice, current);
+	}
+
+	private double randomBrute(final int rounds, final int[] assignments, final int fams, final int maxChoice, final double score) {
 		double current = score;
 		for (int i = 0; i < rounds; i++) {
-			final double delta = brute(assignments, 1 + prng.nextInt(fams), maxChoice, current);
+			final double delta = randomBrute(assignments, 1 + prng.nextInt(fams), maxChoice, current);
 			System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
 			if (delta < 0) {
 				current += delta;
@@ -387,8 +411,11 @@ public class Main {
 
 		double score = main.cost(initialAsignments);
 		// 10 million rounds of random brute force.
-		double bruteDiff = main.brute(10000000, initialAsignments, 6, 4, score);
-		System.out.println("score = " + score + bruteDiff);
+		double bruteDiff = main.brute(initialAsignments, 2, 3, score);
+		if(bruteDiff < 0) {
+			CsvUtil.write(initialAsignments, "/tmp/x.csv");
+		}
+		System.out.println("score = " + (score + bruteDiff));
 
 	}
 }
