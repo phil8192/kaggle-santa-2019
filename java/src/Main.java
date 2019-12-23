@@ -1,6 +1,7 @@
 /* h0 h0 h0 */
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static java.lang.Math.abs;
@@ -223,8 +224,21 @@ public class Main {
 		return current;
 	}
 
-	private double brute(final int[] assignments) {
+	private double brute(final int[] assignments, final int fams, final int maxChoice) {
+		final Integer[] randomFams = prng.ints(0, 5000)
+				.boxed()
+				.distinct()
+				.limit(fams)
+				.toArray(Integer[]::new);
+		List<List<Integer>> prods = Cartisian.product(fams, maxChoice);
+		for(final List<Integer> prod : prods) {
+			// try to move all families into this configuration (reject if any constraint violation)
 
+			// evaluate..
+			// if improve, return
+		}
+		// reset to original state.
+		return 0;
 	}
 
 	private void sanity(int[] assignments) {
@@ -272,8 +286,8 @@ public class Main {
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
-		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
+		int[][] starting_solution = CsvUtil.read("../../best.csv");
 
 
 		// 71757.52
