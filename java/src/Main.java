@@ -173,7 +173,8 @@ public class Main {
 		int max = maxLoops;
 		do {
 			improvement = false;
-			fams: for (int i = 0; i < assignments.length; i++) { // each family i
+			fams:
+			for (int i = 0; i < assignments.length; i++) { // each family i
 				final int[] prefs = familyPrefs[i];
 				final int famSize = familySize[i];
 				final int assignedDay = assignments[i];
@@ -208,7 +209,7 @@ public class Main {
 									if (delta < 0.0) {
 										//System.out.println(current);
 										improvement = true;
-										if(temperature == 0) break fams; // start from family 0 again
+										if (temperature == 0) break fams; // start from family 0 again
 										else break;
 										//break fams;
 									} else {
@@ -225,9 +226,9 @@ public class Main {
 	}
 
 	private boolean checkCapacityConstraints() {
-		for(int i = 1; i < dayCapacities.length; i++) {
+		for (int i = 1; i < dayCapacities.length; i++) {
 			final int cap = dayCapacities[i];
-			if(cap < MIN_PPL || cap > MAX_PPL) {
+			if (cap < MIN_PPL || cap > MAX_PPL) {
 				return false; // violation!
 			}
 		}
@@ -245,14 +246,15 @@ public class Main {
 
 		// stash the original assignments
 		final int[] original = new int[fams];
-		for(int i = 0; i < fams; i++) {
+		for (int i = 0; i < fams; i++) {
 			original[i] = assignments[randomFams[i]];
 		}
 
 		// try all possible configurations
 		final List<List<Integer>> prods = Cartisian.product(fams, maxChoice);
-		for(final List<Integer> prod : prods) {
-			for(int i = 0; i < fams; i++) {
+		for (final List<Integer> prod : prods) {
+			//System.out.println(prod);
+			for (int i = 0; i < fams; i++) {
 				final int fam = randomFams[i];
 				final int famSize = familySize[fam];
 				final int choice = prod.get(i);
@@ -262,27 +264,26 @@ public class Main {
 				// assign this family
 				dayCapacities[assignedDay] -= famSize;
 				dayCapacities[candidateDay] += famSize;
-				assignments[i] = candidateDay;
+				assignments[fam] = candidateDay;
 			}
-
 			// if no constraint violation and improvement, return improvement delta
-			if(checkCapacityConstraints()) {
+			if (checkCapacityConstraints()) {
 				final double candidateCost = cost(assignments);
 				final double delta = candidateCost - current;
-				if(delta < 0) {
+				if (delta < 0) {
 					return delta;
 				}
 			}
 		}
 		// no improvement found. reset back to original
-		for(int i = 0; i < original.length; i++) {
+		for (int i = 0; i < original.length; i++) {
 			final int fam = randomFams[i];
 			final int famSize = familySize[fam];
 			final int assignedDay = assignments[fam];
 			final int originalDay = original[i];
 			dayCapacities[assignedDay] -= famSize;
 			dayCapacities[originalDay] += famSize;
-			assignments[i] = originalDay;
+			assignments[fam] = originalDay;
 		}
 		return 0;
 	}
@@ -313,7 +314,7 @@ public class Main {
 		double coolingSchedule = 0.9999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
-		while(temperature > 0.001) {
+		while (temperature > 0.001) {
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
 			System.out.println(String.format("%.2f", score) + " T = " + String.format("%.6f", temperature));
@@ -329,11 +330,25 @@ public class Main {
 		return best;
 	}
 
+	private double brute(final int rounds, final int[] assignments, final int fams, final int maxChoice, final double score) {
+		double current = score;
+		for (int i = 0; i < rounds; i++) {
+			final double delta = brute(assignments, fams, maxChoice, current);
+			System.out.println("brute round = " + i + " (" + String.format("%.2f", current) + ")");
+			if (delta < 0) {
+				current += delta;
+				//System.out.println("**** new brute score = " + current + "****");
+				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", current) + ".csv");
+			}
+		}
+		return current - score;
+	}
+
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
 		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv"); // 77124.66595889143
-		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		int[][] starting_solution = CsvUtil.read("../../solutions/70578.36.csv");
 
 
 		// 71757.52
@@ -352,7 +367,10 @@ public class Main {
 		//System.out.println(System.currentTimeMillis() - l + "ms.");
 		//System.out.println(score);
 		//CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		double score = main.optimise(initialAsignments);
-		System.out.println("minima = " + score);
+		//double score = main.optimise(initialAsignments);
+		double score = main.cost(initialAsignments);
+		double bruteDiff = main.brute(1000000, initialAsignments, 4, 4, score);
+		System.out.println("score = " + score+bruteDiff);
+
 	}
 }
