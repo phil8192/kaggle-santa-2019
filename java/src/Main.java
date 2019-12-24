@@ -259,7 +259,7 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		double temperature = 5.5;
+		double temperature = 5.1;
 		double coolingSchedule = 0.999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
@@ -268,15 +268,18 @@ public class Main {
 			i++;
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
-			if(i % 100000 == 0) {
-				final double diff1 = brute(assignments, 1, 4, score);
-				if(diff1 < 0) {
-					score += diff1;
-				}
-				final double diff2 = brute(assignments, 2, 4, score);
-				if(diff2 < 0) {
-					score += diff2;
-				}
+			if(i % 1000000 == 0) {
+
+				// 10 million rounds of random brute force: do not go too far astray
+
+//				final double diff1 = brute(assignments, 1, 4, score);
+//				if(diff1 < 0) {
+//					score += diff1;
+//				}
+//				final double diff2 = brute(assignments, 2, 4, score);
+//				if(diff2 < 0) {
+//					score += diff2;
+//				}
 				final double diff3 = randomBrute(10000000, assignments, 3 , 4, score);
 				if(diff3 < 0) {
 					score += diff3;
@@ -292,9 +295,21 @@ public class Main {
 			}
 			temperature *= coolingSchedule;
 		}
-		final double diff = randomBrute(100000000, assignments, 3 , 4, best);
-		if(diff < 0) {
-			best += diff;
+		final double diff1 = brute(assignments, 1, 4, best);
+		if(diff1 < 0) {
+			best += diff1;
+			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
+			CsvUtil.write(assignments, "../../solutions/best.csv");
+		}
+		final double diff2 = brute(assignments, 2, 4, best);
+		if(diff2 < 0) {
+			best += diff2;
+			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
+			CsvUtil.write(assignments, "../../solutions/best.csv");
+		}
+		final double diff3 = randomBrute(100000000, assignments, 3 , 4, best);
+		if(diff3 < 0) {
+			best += diff3;
 			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
 			CsvUtil.write(assignments, "../../solutions/best.csv");
 		}
