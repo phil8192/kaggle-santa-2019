@@ -262,7 +262,7 @@ public class Main {
 		//double temperature = 5;
 		//double coolingSchedule = 0.9999999;
 		double temperature = 5;
-		double coolingSchedule = 0.99999;
+		double coolingSchedule = 0.999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
 		while (temperature > 0.001) {
@@ -292,10 +292,9 @@ public class Main {
 	}
 
 	private double scan(final Integer[] fams, final int[] assignments, final int maxChoice, final double current, final double currentPenalty) {
-		final double origPenalty = currentPenalty; //getPenalty(assignments);
 
 		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
-		double penaltyDelta = 0.0;
+		//double penaltyDelta = 0.0;
 
 		// stash the original assignments
 		final int[] original = new int[fams.length];
@@ -303,12 +302,16 @@ public class Main {
 			original[i] = assignments[fams[i]];
 		}
 
-
 		// try all possible configurations
 		final List<List<Integer>> prods = Cartisian.product(fams.length, maxChoice);
-		for (final List<Integer> prod : prods) {
+
+
+		for (final List<Integer> prod : prods) { // for each set of choices
 			//System.out.println(prod);
 
+			double penaltyDelta = 0.0;
+
+			// set all the fams
 			for (int i = 0; i < fams.length; i++) {
 				final int fam = fams[i];
 				final int famSize = familySize[fam];
@@ -324,29 +327,44 @@ public class Main {
 				penaltyDelta += getPenaltyDelta(fam, assignedDay, candidateDay);
 
 			}
+
+//			final double __penalty = currentPenalty + penaltyDelta;
+//			final double xpenalty = getPenalty(assignments);
+//			if(Math.abs(__penalty - xpenalty) > 0.00001) {
+//				System.out.println("X _pen = " + __penalty + " X pen = " + xpenalty);
+//			}
+
 			// if no constraint violation and improvement, return improvement delta
 			if (checkCapacityConstraints()) {
 				// expensive -> final double candidateCost = cost(assignments);
-				//final double penalty = getPenalty(assignments);
-				final double _penalty = origPenalty + penaltyDelta;
+
+
+				final double _penalty = currentPenalty + penaltyDelta;
+				//final double _penalty = getPenalty(assignments);
+				//if(Math.abs(_penalty - penalty) > 0.00001) {
+				//	System.out.println("X _pen = " + _penalty + " X pen = " + penalty);
+				//}
+
 				//System.out.println("pen = " + penalty + " _pen = " + _penalty);
 				final double accountingCost = getAccountingCost();
 				final double candidateCost = _penalty + accountingCost;
 				final double delta = candidateCost - current;
 				if (delta < 0) {
+					//final double penalty = getPenalty(assignments);
+					//System.out.println("pen = " + penalty + " _pen = " + _penalty);
 					return delta;
 				}
 			}
-		}
-		// no improvement found. reset back to original
-		for (int i = 0; i < original.length; i++) {
-			final int fam = fams[i];
-			final int famSize = familySize[fam];
-			final int assignedDay = assignments[fam];
-			final int originalDay = original[i];
-			dayCapacities[assignedDay] -= famSize;
-			dayCapacities[originalDay] += famSize;
-			assignments[fam] = originalDay;
+			// put the back so can do penalty delta in next set of choices
+			for (int i = 0; i < original.length; i++) {
+				final int fam = fams[i];
+				final int famSize = familySize[fam];
+				final int assignedDay = assignments[fam];
+				final int originalDay = original[i];
+				dayCapacities[assignedDay] -= famSize;
+				dayCapacities[originalDay] += famSize;
+				assignments[fam] = originalDay;
+			}
 		}
 		return 0;
 	}
@@ -360,14 +378,51 @@ public class Main {
 			improvement = false;
 			for (final List<Integer> combo : famCombos) {
 				final Integer[] famIndices = combo.toArray(new Integer[]{});
-				final double delta = scan(famIndices, assignments, maxChoice, current, currentPenalty);
+				final double delta = scan(famIndices, assignments, maxChoice, score, currentPenalty);
 				System.out.println(Arrays.toString(famIndices));
 				if (delta < 0) {
 					score += delta;
+
+					//double p = getPenalty(assignments);
+					//double a = getAccountingCost();
+					//double c = p + a;
+
 					currentPenalty = getPenalty(assignments);
-					System.out.println(String.format("%.2f", score));
-					improvement = true;
+//					System.out.println(String.format("%.2f", score) + " (" + c + ")");
+//					if(Math.abs(c - score) > 0.00001) {
+//						System.exit(0);
+//					} else {
 					CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + ".csv");
+					CsvUtil.write(assignments, "../../solutions/best.csv");
+					//}
+					improvement = true;
+				}
+			}
+		} while (improvement);
+		return score - current;
+	}
+
+	private double brute3(final int[] assignments, final int maxChoice, final double current) {
+		double score = current;
+		double currentPenalty = getPenalty(assignments);
+		boolean improvement;
+		do {
+			improvement = false;
+			for (int i = 0; i < 5000; i++) {
+				for (int j = i + 1; j < 5000; j++) {
+					for (int k = j + 1; k < 5000; k++) {
+						final Integer[] famIndices = new Integer[]{i, j, k};
+						final double delta = scan(famIndices, assignments, maxChoice, score, currentPenalty);
+						System.out.println(Arrays.toString(famIndices));
+						if (delta < 0) {
+							score += delta;
+							currentPenalty = getPenalty(assignments);
+							System.out.println(String.format("%.2f", score));
+							improvement = true;
+							CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + ".csv");
+							CsvUtil.write(assignments, "../../solutions/best.csv");
+						}
+					}
 				}
 			}
 		} while (improvement);
@@ -417,24 +472,15 @@ public class Main {
 			initialAsignments[i] = starting_solution[i][1];
 		}
 		Main main = new Main(family_data, initialAsignments);
-		//System.out.println(main.cost(initialAsignments));
 
-		//final long l = System.currentTimeMillis();
-		//double score = main.localMinima(initialAsignments, 0, 0);
-		//System.out.println(System.currentTimeMillis() - l + "ms.");
-		//System.out.println(score);
-		//CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		//main.optimise(initialAsignments);
 
 		double score = main.cost(initialAsignments);
 		System.out.println("initial = " + score);
-		// 10 million rounds of random brute force.
-		double bruteDiff = main.brute(initialAsignments, 2, 10, score);
-		//double bruteDiff = main.randomBrute(10000000, initialAsignments, 3, 4, score);
-		//if(bruteDiff < 0) {
-		//	CsvUtil.write(initialAsignments, "/tmp/x.csv");
-		//}
-		System.out.println("score = " + (score + bruteDiff));
+		//double diff = main.brute(initialAsignments, 2, 4, score);
+		//double diff = main.brute3(initialAsignments, 4, score);
+		//double diff = main.randomBrute(10000000, initialAsignments, 3 , 4, score);
+		double diff = main.optimise(initialAsignments);
+		System.out.println("score = " + (score + diff));
 
 	}
 }
