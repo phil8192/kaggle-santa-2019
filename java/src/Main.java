@@ -259,24 +259,44 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		//double temperature = 5;
-		//double coolingSchedule = 0.9999999;
-		double temperature = 5;
+		double temperature = 5.5;
 		double coolingSchedule = 0.999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
-		while (temperature > 0.001) {
+		int i = 0;
+		while (temperature > 0.2) {
+			i++;
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
-			System.out.println(String.format("%.2f", score) + " T = " + String.format("%.6f", temperature));
+			if(i % 100000 == 0) {
+				final double diff1 = brute(assignments, 1, 4, score);
+				if(diff1 < 0) {
+					score += diff1;
+				}
+				final double diff2 = brute(assignments, 2, 4, score);
+				if(diff2 < 0) {
+					score += diff2;
+				}
+				final double diff3 = randomBrute(10000000, assignments, 3 , 4, score);
+				if(diff3 < 0) {
+					score += diff3;
+				}
+			}
+			System.out.println(String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
 			if (score < best) {
 				best = score;
 				sanity(assignments);
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
-				CsvUtil.write(assignments, "../../solutions/" + score + ".csv");
+				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
 				CsvUtil.write(assignments, "../../solutions/best.csv");
 			}
 			temperature *= coolingSchedule;
+		}
+		final double diff = randomBrute(100000000, assignments, 3 , 4, best);
+		if(diff < 0) {
+			best += diff;
+			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
+			CsvUtil.write(assignments, "../../solutions/best.csv");
 		}
 		return best;
 	}
@@ -392,10 +412,21 @@ public class Main {
 //					if(Math.abs(c - score) > 0.00001) {
 //						System.exit(0);
 //					} else {
-					CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + ".csv");
-					CsvUtil.write(assignments, "../../solutions/best.csv");
+
+
+					//CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + "_b.csv");
+					//CsvUtil.write(assignments, "../../solutions/best.csv");
+
+
 					//}
-					improvement = true;
+
+
+
+
+					//improvement = true;
+
+
+
 				}
 			}
 		} while (improvement);
@@ -419,7 +450,7 @@ public class Main {
 							currentPenalty = getPenalty(assignments);
 							System.out.println(String.format("%.2f", score));
 							improvement = true;
-							CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + ".csv");
+							CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + "_b3.csv");
 							CsvUtil.write(assignments, "../../solutions/best.csv");
 						}
 					}
@@ -449,8 +480,12 @@ public class Main {
 				current += delta;
 				currentPenalty = getPenalty(assignments);
 				//System.out.println("**** new brute score = " + current + "****");
-				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", current) + ".csv");
-				CsvUtil.write(assignments, "../../solutions/best.csv");
+
+
+			//	CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", current) + "_rb.csv");
+			//	CsvUtil.write(assignments, "../../solutions/best.csv");
+
+
 			}
 		}
 		return current - score;
@@ -476,11 +511,23 @@ public class Main {
 
 		double score = main.cost(initialAsignments);
 		System.out.println("initial = " + score);
-		//double diff = main.brute(initialAsignments, 2, 4, score);
-		//double diff = main.brute3(initialAsignments, 4, score);
-		//double diff = main.randomBrute(10000000, initialAsignments, 3 , 4, score);
-		double diff = main.optimise(initialAsignments);
-		System.out.println("score = " + (score + diff));
 
+
+//		double diff1 = main.brute(initialAsignments, 1, 4, score);
+//		System.out.println("score = " + (score + diff1));
+//
+//		double diff2 = main.brute(initialAsignments, 2, 4, score);
+//		System.out.println("score = " + (score + diff2));
+//
+//		double diff3 = main.randomBrute(100000000, initialAsignments, 3 , 4, score);
+//		System.out.println("score = " + (score + diff3));
+
+
+//		double diff = main.brute3(initialAsignments, 4, score);
+
+
+
+			double diff = main.optimise(initialAsignments);
+			System.out.println("score = " + (score + diff));
 	}
 }
