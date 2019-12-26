@@ -257,8 +257,8 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		double temperature = 5.1;
-		double coolingSchedule = 0.999999;
+		double temperature = 4;
+		double coolingSchedule = 0.9999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
@@ -531,18 +531,18 @@ public class Main {
 //
 //		double diff2 = main.brute(initialAsignments, 2, 4, score);
 //		System.out.println("score = " + (score + diff2));
-//
+
 		//double diff3 = main.randomBrute(100000000, initialAsignments, 4 , 4, score);
 		//System.out.println("score = " + (score + diff3));
 
 
-//		int from = Integer.parseInt(meh[0]);
-//		int to = Integer.parseInt(meh[1]);
-//		double diff = main.brute3(initialAsignments, 4, score, from, to);
+		int from = Integer.parseInt(meh[0]);
+		int to = Integer.parseInt(meh[1]);
+		double diff = main.brute3(initialAsignments, 4, score, from, to);
 
 
 //
-		double diff = main.optimise(initialAsignments);
+//		double diff = main.optimise(initialAsignments);
 		System.out.println("score = " + (score + diff));
 	}
 }
