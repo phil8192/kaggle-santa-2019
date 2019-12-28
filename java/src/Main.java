@@ -1,6 +1,8 @@
 /* h0 h0 h0 */
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.random;
@@ -34,6 +36,10 @@ public class Main {
 	private final int[] familySize;
 
 	private final Random prng = new Random();
+
+
+	private final BlockingQueue<Candidate> best = new SynchronousQueue<>();
+
 
 	private Main(int[][] familyData, int[] initialAssignments) {
 		this.familyPrefs = new int[5000][10];
@@ -211,7 +217,7 @@ public class Main {
 				final int assignedDay = assignments[i];
 				final int assignedDayCap = dayCapacities[assignedDay];
 				if (assignedDayCap - famSize >= MIN_PPL) {
-					for (int j = 0; j < 10; j++) {
+					for (int j = 0; j < 5; j++) {
 						final int candidateDay = prefs[j];
 						if (candidateDay != assignedDay) {
 							final int candidateDayCap = dayCapacities[candidateDay];
@@ -257,8 +263,8 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		double temperature = 4;
-		double coolingSchedule = 0.9999999;
+		double temperature = 3;
+		double coolingSchedule = 0.999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
@@ -266,7 +272,7 @@ public class Main {
 			i++;
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
-			if(i % 100000 == 0) {
+			if(i % 500000 == 0) {
 
 				// 10 million rounds of random brute force: do not go too far astray
 
@@ -278,7 +284,7 @@ public class Main {
 //				if(diff2 < 0) {
 //					score += diff2;
 //				}
-				final double diff3 = randomBrute(10000000, assignments, 3 , 4, score);
+				final double diff3 = randomBrute(10000000, assignments, 3 , 5, score);
 				if(diff3 < 0) {
 					score += diff3;
 				}
@@ -504,6 +510,62 @@ public class Main {
 		return current - score;
 	}
 
+	private final class Candidate {
+		private final int[] ass;
+		private final double score;
+		private final String method;
+
+		public Candidate(int[] ass, double score, final String method) {
+			this.ass = ass;
+			this.score = score;
+			this.method = method;
+		}
+
+		public int[] getAss() {
+			return ass;
+		}
+
+		public double getScore() {
+			return score;
+		}
+
+		public String getMethod() {
+			return method;
+		}
+	}
+
+	private final class Coordinator implements Runnable {
+		private boolean alive = true;
+		private double bestScore;
+
+		public Coordinator(final double bestScore) {
+			this.bestScore = bestScore;
+		}
+
+		public void kill() {
+			this.alive = false;
+		}
+
+		@Override
+		public void run() {
+			while(alive) {
+				try {
+					final Candidate candidate = best.take();
+					final double score = candidate.getScore();
+					if(score < bestScore) {
+						bestScore = score;
+						final int[] ass = candidate.getAss();
+						final String method = candidate.getMethod();
+						System.out.println("score = " + String.format("%.2f", score) + " (" + method + ")");
+						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
+					}
+				} catch(InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		}
+	}
+
 	public static void main(String[] meh) {
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		//int[][] starting_solution = CsvUtil.read("../../../submission_71647.5625.csv");
@@ -536,13 +598,13 @@ public class Main {
 		//System.out.println("score = " + (score + diff3));
 
 
-		int from = Integer.parseInt(meh[0]);
-		int to = Integer.parseInt(meh[1]);
-		double diff = main.brute3(initialAsignments, 4, score, from, to);
+//		int from = Integer.parseInt(meh[0]);
+//		int to = Integer.parseInt(meh[1]);
+//		double diff = main.brute3(initialAsignments, 5, score, from, to);
 
 
 //
-//		double diff = main.optimise(initialAsignments);
+		double diff = main.optimise(initialAsignments);
 		System.out.println("score = " + (score + diff));
 	}
 }
