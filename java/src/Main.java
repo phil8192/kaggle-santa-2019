@@ -7,199 +7,19 @@ import java.util.concurrent.SynchronousQueue;
 import static java.lang.Math.abs;
 import static java.lang.Math.random;
 
-public class Main {
-	public static final String ANSI_RESET = "\u001B[0m";
-	public static final String ANSI_BLACK = "\u001B[30m";
-	public static final String ANSI_RED = "\u001B[31m";
-	public static final String ANSI_GREEN = "\u001B[32m";
-	public static final String ANSI_YELLOW = "\u001B[33m";
-	public static final String ANSI_BLUE = "\u001B[34m";
-	public static final String ANSI_PURPLE = "\u001B[35m";
-	public static final String ANSI_CYAN = "\u001B[36m";
-	public static final String ANSI_WHITE = "\u001B[37m";
-
-
-	private static final int MAX_FAM_SIZE = 10;
-	private static final int MAX_CHOICE = 10;
-	private static final int MIN_PPL = 125;
-	private static final int MAX_PPL = 300;
-
-	private final double[][] accountingCost;
-
-	private final int[] dayCapacities;
-
-	// all family penalties
-	// 5000*100
-	private final double[][] allPenalties;
-
-	private final int[][] familyPrefs;
-	private final int[] familySize;
+public class Main extends Optimiser {
 
 	private final Random prng = new Random();
-
-
 	private final BlockingQueue<Candidate> best = new SynchronousQueue<>();
 
-
 	private Main(int[][] familyData, int[] initialAssignments) {
-		this.familyPrefs = new int[5000][10];
-		this.familySize = new int[5000];
-		double[][] penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE + 1];
-		for (int i = 1; i < MAX_FAM_SIZE; i++) {
-			penalties[i][0] = 0;
-			penalties[i][1] = 50;
-			penalties[i][2] = 50 + 9 * i;
-			penalties[i][3] = 100 + 9 * i;
-			penalties[i][4] = 200 + 9 * i;
-			penalties[i][5] = 200 + 18 * i;
-			penalties[i][6] = 300 + 18 * i;
-			penalties[i][7] = 300 + 36 * i;
-			penalties[i][8] = 400 + 36 * i;
-			penalties[i][9] = 500 + 36 * i + 199 * i;
-			penalties[i][10] = 500 + 36 * i + 398 * i;
-		}
-		// init all penalties matrix
-		allPenalties = new double[5000][100 + 1];
-		for (int i = 0; i < allPenalties.length; i++) {
-			for (int j = 0; j < allPenalties[0].length; j++) {
-				allPenalties[i][j] = Double.MAX_VALUE;
-			}
-		}
-		for (int i = 0; i < familyData.length; i++) {
-			int famSize = familyData[i][11];
-			familySize[i] = famSize;
-			for (int j = 0; j < 10; j++) {
-				int choice_j = familyData[i][j + 1];
-				familyPrefs[i][j] = choice_j;
-				allPenalties[i][choice_j] = penalties[famSize][j];
-			}
-		}
-		// init accounting matrix
-		int max_cap = MAX_PPL + 1; // 1 to 300 ppl
-		accountingCost = new double[max_cap][max_cap];
-		for (int i = 1; i < max_cap; i++) {
-			for (int j = 1; j < max_cap; j++) {
-				accountingCost[i][j] = ((i - 125) / 400.0) * Math.pow(i, 0.5 + (abs(i - j) / 50.0));
-			}
-		}
-		// init day capacities
-		dayCapacities = new int[100 + 1];
-		for (int i = 0; i < initialAssignments.length; i++) {
-			int day = initialAssignments[i];
-			int famSize = familySize[i];
-			dayCapacities[day] += famSize;
-		}
-	}
-
-	private void sanity(int[] assignments) {
-		int[] dayCaps = new int[100 + 1];
-		for (int i = 0; i < assignments.length; i++) {
-			int assignment = assignments[i];
-			dayCaps[assignment] += familySize[i];
-		}
-		for (int i = 1; i < dayCaps.length; i++) {
-			int cap = dayCaps[i];
-			if (cap != dayCapacities[i]) {
-				System.err.println("day " + i + " cap inconsistency:\n" +
-						Arrays.toString(dayCapacities) + " !=\n" + Arrays.toString(dayCaps));
-			}
-			if (cap < MIN_PPL) {
-				System.err.println("cap " + cap + " < " + MIN_PPL);
-			}
-			if (cap > MAX_PPL) {
-				System.err.println("cap " + cap + " > " + MAX_PPL);
-			}
-		}
-	}
-
-	private double getAccountingCost(final int now, final int pre) {
-		return accountingCost[now][pre];
-	}
-
-	private double getPenalty(final int[] familyAssignments) {
-		double penalty = 0.0;
-		for (int i = 0, len = familyAssignments.length; i < len; i++) {
-			final int day = familyAssignments[i];
-			penalty += allPenalties[i][day];
-		}
-		return penalty;
-	}
-
-	private double getAccountingCost() {
-		double accounting = 0.0;
-		// first day is special
-		accounting += getAccountingCost(dayCapacities[100], dayCapacities[100]);
-		for (int i = 100; --i > 0; ) {
-			accounting += getAccountingCost(dayCapacities[i], dayCapacities[i + 1]);
-		}
-		return accounting;
-	}
-
-	private double cost(final int[] familyAssignments) {
-		final double penalty = getPenalty(familyAssignments);
-		final double accounting = getAccountingCost();
-		return penalty + accounting;
+		super(familyData, initialAssignments);
 	}
 
 	private double acceptanceProbability(final double oldScore, final double newScore, final double temperature) {
 		final double d = newScore - oldScore;
 		// less damaging moves have higher probability
 		return Math.exp(-d / temperature);
-	}
-
-	// the amount that assignedDay contributes to the accounting cost.
-	private double getAssignedAccountingDelta(final int assignedDay, final int famSize) {
-		final double ac1; // how it is.
-		final double ac2; // how it is *without* family.
-		if (assignedDay == 1) {
-			ac1 = getAccountingCost(dayCapacities[1], dayCapacities[2]);
-			ac2 = getAccountingCost(dayCapacities[1] - famSize, dayCapacities[2]);
-		} else if (assignedDay == 100) {
-			ac1 = getAccountingCost(dayCapacities[99], dayCapacities[100]) + getAccountingCost(dayCapacities[100], dayCapacities[100]);
-			ac2 = getAccountingCost(dayCapacities[99], dayCapacities[100] - famSize) + getAccountingCost(dayCapacities[100] - famSize, dayCapacities[100] - famSize);
-		} else {
-			final int nextDayCap = dayCapacities[assignedDay - 1];
-			final int currDayCap = dayCapacities[assignedDay];
-			final int prevDayCap = dayCapacities[assignedDay + 1];
-			final int propDayCap = currDayCap - famSize;
-			ac1 = getAccountingCost(nextDayCap, currDayCap) + getAccountingCost(currDayCap, prevDayCap);
-			ac2 = getAccountingCost(nextDayCap, propDayCap) + getAccountingCost(propDayCap, prevDayCap);
-		}
-		return ac2 - ac1;
-	}
-
-	// the amount that candidateDay will contribute to the accounting cost.
-	private double getCandidateAccountingDelta(final int assignedDay, final int candidateDay, final int famSize) {
-		final double ac1; // how it is
-		final double ac2; // how it is *with* family.
-
-		if (candidateDay == 1) {
-			ac1 = getAccountingCost(dayCapacities[1], dayCapacities[2] - (2 == assignedDay ? famSize : 0));
-			ac2 = getAccountingCost(dayCapacities[1] + famSize, dayCapacities[2] - (2 == assignedDay ? famSize : 0));
-		} else if (candidateDay == 100) {
-			ac1 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100]) + getAccountingCost(dayCapacities[100], dayCapacities[100]);
-			ac2 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100] + famSize) + getAccountingCost(dayCapacities[100] + famSize, dayCapacities[100] + famSize);
-		} else {
-			final int nextDayCap = dayCapacities[candidateDay - 1] - (candidateDay - 1 == assignedDay ? famSize : 0);
-			final int currDayCap = dayCapacities[candidateDay];
-			final int prevDayCap = dayCapacities[candidateDay + 1] - (candidateDay + 1 == assignedDay ? famSize : 0);
-			final int propDayCap = currDayCap + famSize;
-			ac1 = getAccountingCost(nextDayCap, currDayCap) + getAccountingCost(currDayCap, prevDayCap);
-			ac2 = getAccountingCost(nextDayCap, propDayCap) + getAccountingCost(propDayCap, prevDayCap);
-		}
-		return ac2 - ac1;
-	}
-
-	private double getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay) {
-		final double assignedPenalty = allPenalties[fam][assignedDay];
-		final double candidatePenalty = allPenalties[fam][candidateDay];
-		return candidatePenalty - assignedPenalty;
-	}
-
-	private double getAccountingDelta(final int assignedDay, final int candidateDay, final int famSize) {
-		final double ac1 = getAssignedAccountingDelta(assignedDay, famSize);
-		final double ac2 = getCandidateAccountingDelta(assignedDay, candidateDay, famSize);
-		return ac1 + ac2;
 	}
 
 	private double localMinima(final int[] assignments, final double temperature, final int maxLoops) {
@@ -263,7 +83,7 @@ public class Main {
 	}
 
 	private double optimise(final int[] assignments) {
-		double temperature = 3;
+		double temperature = 4;
 		double coolingSchedule = 0.999999;
 		double best = localMinima(assignments, 0, 0);
 		System.out.println("best = " + String.format("%.2f", best));
@@ -272,7 +92,7 @@ public class Main {
 			i++;
 			localMinima(assignments, temperature, 1);
 			double score = localMinima(assignments, 0, 0);
-			if(i % 500000 == 0) {
+			if(i % 100000 == 0) {
 
 				// 10 million rounds of random brute force: do not go too far astray
 
@@ -318,16 +138,6 @@ public class Main {
 			CsvUtil.write(assignments, "../../solutions/best.csv");
 		}
 		return best;
-	}
-
-	private boolean checkCapacityConstraints() {
-		for (int i = 1; i < dayCapacities.length; i++) {
-			final int cap = dayCapacities[i];
-			if (cap < MIN_PPL || cap > MAX_PPL) {
-				return false; // violation!
-			}
-		}
-		return true;
 	}
 
 	private double scan(final Integer[] fams, final int[] assignments, final int maxChoice, final double current, final double currentPenalty) {
@@ -563,6 +373,47 @@ public class Main {
 					Thread.currentThread().interrupt();
 				}
 			}
+		}
+	}
+
+	private final class BruteWorker implements Runnable {
+		private boolean alive = true;
+
+		public BruteWorker() {
+			this.alive = alive;
+		}
+
+		public void kill() {
+			this.alive = false;
+		}
+
+		@Override
+		public void run() {
+//			while (alive) {
+//				double score = current;
+//				double currentPenalty = getPenalty(assignments);
+//				boolean improvement;
+//				do {
+//					improvement = false;
+//					for (int i = from; i < to; i++) {
+//						for (int j = i + 1; j < 5000; j++) {
+//							for (int k = j + 1; k < 5000; k++) {
+//								final Integer[] famIndices = new Integer[]{i, j, k};
+//								final double delta = scan(famIndices, assignments, maxChoice, score, currentPenalty);
+//								System.out.println(ANSI_GREEN + String.format("%.2f", score) + ANSI_RESET + " " + Arrays.toString(famIndices));
+//								if (delta < 0) {
+//									score += delta;
+//									currentPenalty = getPenalty(assignments);
+//									System.out.println(String.format("%.2f", score));
+//									improvement = true;
+//									best.put(new Candidate(assignments, score, "b3"));
+//								}
+//							}
+//						}
+//					}
+//				} while (improvement);
+//				return score - current;
+//			}
 		}
 	}
 
