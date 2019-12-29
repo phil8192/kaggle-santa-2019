@@ -3,6 +3,7 @@
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 
 import static java.lang.Math.abs;
 
@@ -36,7 +37,9 @@ class Optimiser {
 
 	final Random prng = new Random();
 
-	private final class Candidate {
+	final BlockingQueue<Candidate> q;
+
+	final class Candidate {
 		private final int[] ass;
 		private final double score;
 		private final String method;
@@ -60,7 +63,8 @@ class Optimiser {
 		}
 	}
 
-	Optimiser(int[][] familyData, int[] initialAssignments) {
+	Optimiser(int[][] familyData, int[] initialAssignments, final BlockingQueue<Candidate> q) {
+		this.q = q;
 		this.assignments = initialAssignments;
 		this.familyPrefs = new int[5000][10];
 		this.familySize = new int[5000];
