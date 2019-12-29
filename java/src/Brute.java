@@ -1,12 +1,20 @@
 import java.util.Arrays;
 
 public class Brute extends Optimiser {
-	public Brute(int[][] familyData, int[] initialAssignments) {
+	private final int from;
+	private final int to;
+	private final int maxChoice;
+
+	public Brute(int[][] familyData, int[] initialAssignments, final int from, final int to, final int maxChoice) {
 		super(familyData, initialAssignments);
+		this.from = from;
+		this.to = to;
+		this.maxChoice = maxChoice;
 	}
 
-	double brute3(final int maxChoice, final double current, final int from, final int to) {
-		double score = current;
+	double optimise() {
+		final double current = cost(assignments);
+		double score = cost(assignments);
 		double currentPenalty = getPenalty(assignments);
 		boolean improvement;
 		do {

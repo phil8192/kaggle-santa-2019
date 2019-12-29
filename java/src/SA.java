@@ -36,7 +36,8 @@ public class SA extends Optimiser {
 								final double delta = penaltyDelta + accountDelta;
 
 								final double candidateScore = current + delta;
-								if (candidateScore < current || (maxLoops > 0 && acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble())) {
+								if (candidateScore < current || (maxLoops > 0 &&
+										acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble())) {
 									dayCapacities[assignedDay] -= famSize;
 									dayCapacities[candidateDay] += famSize;
 									assignments[i] = candidateDay;
@@ -44,12 +45,6 @@ public class SA extends Optimiser {
 									current += delta;
 									currentPenalty += penaltyDelta;
 									currentAccount += accountDelta;
-
-//									final double sanity = cost(assignments) - current;
-//									if(Math.abs(sanity) >= 0.00001) {
-//										System.out.println(current + " != " + cost(assignments));
-//										System.exit(1);
-//									}
 
 									if (delta < 0.0) {
 										//System.out.println(current);
@@ -70,7 +65,7 @@ public class SA extends Optimiser {
 		return current;
 	}
 
-	private double optimise() {
+	double optimise() {
 		double temperature = 4;
 		double coolingSchedule = 0.999999;
 		double best = localMinima(0, 0);
@@ -81,7 +76,6 @@ public class SA extends Optimiser {
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
 			if(i % 100000 == 0) {
-
 				// 10 million rounds of random brute force: do not go too far astray
 
 //				final double diff1 = brute(assignments, 1, 4, score);

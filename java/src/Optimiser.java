@@ -379,4 +379,9 @@ class Optimiser {
 		return score - current;
 	}
 
+	double optimise() {
+		final double score = cost(assignments);
+		return randomBrute(1000000, 3, 5, score);
+	}
+
 }
