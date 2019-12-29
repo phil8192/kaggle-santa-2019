@@ -1,8 +1,12 @@
+/* h0 h0 h0 */
+
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import static java.lang.Math.abs;
 
-public class Optimiser {
+class Optimiser {
 
 	static final String ANSI_RESET = "\u001B[0m";
 	static final String ANSI_BLACK = "\u001B[30m";
@@ -14,23 +18,50 @@ public class Optimiser {
 	static final String ANSI_CYAN = "\u001B[36m";
 	static final String ANSI_WHITE = "\u001B[37m";
 
-	static final int MAX_FAM_SIZE = 10;
-	static final int MAX_CHOICE = 10;
+	private static final int MAX_FAM_SIZE = 10;
+	private static final int MAX_CHOICE = 10;
 	static final int MIN_PPL = 125;
 	static final int MAX_PPL = 300;
 
-	final double[][] accountingCost;
+	private final double[][] accountingCost;
 	final int[] dayCapacities;
+	final int[] assignments;
 
 	// all family penalties
 	// 5000*100
-	final double[][] allPenalties;
+	private final double[][] allPenalties;
 
 	final int[][] familyPrefs;
 	final int[] familySize;
 
+	final Random prng = new Random();
+
+	private final class Candidate {
+		private final int[] ass;
+		private final double score;
+		private final String method;
+
+		public Candidate(int[] ass, double score, final String method) {
+			this.ass = ass;
+			this.score = score;
+			this.method = method;
+		}
+
+		public int[] getAss() {
+			return ass;
+		}
+
+		public double getScore() {
+			return score;
+		}
+
+		public String getMethod() {
+			return method;
+		}
+	}
 
 	Optimiser(int[][] familyData, int[] initialAssignments) {
+		this.assignments = initialAssignments;
 		this.familyPrefs = new int[5000][10];
 		this.familySize = new int[5000];
 		double[][] penalties = new double[MAX_FAM_SIZE + 1][MAX_CHOICE + 1];
@@ -185,7 +216,7 @@ public class Optimiser {
 		return ac1 + ac2;
 	}
 
-	boolean checkCapacityConstraints() {
+	private boolean checkCapacityConstraints() {
 		for (int i = 1; i < dayCapacities.length; i++) {
 			final int cap = dayCapacities[i];
 			if (cap < MIN_PPL || cap > MAX_PPL) {
@@ -193,6 +224,159 @@ public class Optimiser {
 			}
 		}
 		return true;
+	}
+
+	double scan(final Integer[] fams, final int maxChoice, final double current, final double currentPenalty) {
+
+		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
+		//double penaltyDelta = 0.0;
+
+		// stash the original assignments
+		final int[] original = new int[fams.length];
+		for (int i = 0; i < fams.length; i++) {
+			original[i] = assignments[fams[i]];
+		}
+
+		// try all possible configurations
+		final List<List<Integer>> prods = Cartisian.product(fams.length, maxChoice);
+
+
+		for (final List<Integer> prod : prods) { // for each set of choices
+			//System.out.println(prod);
+
+			double penaltyDelta = 0.0;
+
+			// set all the fams
+			for (int i = 0; i < fams.length; i++) {
+				final int fam = fams[i];
+				final int famSize = familySize[fam];
+				final int choice = prod.get(i);
+				final int assignedDay = assignments[fam];
+				final int candidateDay = familyPrefs[fam][choice];
+
+				// assign this family
+				dayCapacities[assignedDay] -= famSize;
+				dayCapacities[candidateDay] += famSize;
+				assignments[fam] = candidateDay;
+
+				penaltyDelta += getPenaltyDelta(fam, assignedDay, candidateDay);
+
+			}
+
+//			final double __penalty = currentPenalty + penaltyDelta;
+//			final double xpenalty = getPenalty(assignments);
+//			if(Math.abs(__penalty - xpenalty) > 0.00001) {
+//				System.out.println("X _pen = " + __penalty + " X pen = " + xpenalty);
+//			}
+
+			// if no constraint violation and improvement, return improvement delta
+			if (checkCapacityConstraints()) {
+				// expensive -> final double candidateCost = cost(assignments);
+
+
+				final double _penalty = currentPenalty + penaltyDelta;
+				//final double _penalty = getPenalty(assignments);
+				//if(Math.abs(_penalty - penalty) > 0.00001) {
+				//	System.out.println("X _pen = " + _penalty + " X pen = " + penalty);
+				//}
+
+				//System.out.println("pen = " + penalty + " _pen = " + _penalty);
+				final double accountingCost = getAccountingCost();
+				final double candidateCost = _penalty + accountingCost;
+				final double delta = candidateCost - current;
+				if (delta < 0) {
+					//final double penalty = getPenalty(assignments);
+					//System.out.println("pen = " + penalty + " _pen = " + _penalty);
+					return delta;
+				}
+			}
+			// put the back so can do penalty delta in next set of choices
+			for (int i = 0; i < original.length; i++) {
+				final int fam = fams[i];
+				final int famSize = familySize[fam];
+				final int assignedDay = assignments[fam];
+				final int originalDay = original[i];
+				dayCapacities[assignedDay] -= famSize;
+				dayCapacities[originalDay] += famSize;
+				assignments[fam] = originalDay;
+			}
+		}
+		return 0;
+	}
+
+	private double randomBrute(final int fams, final int maxChoice, final double current, final double currentPenalty) {
+		// get list of random family indices
+		final Integer[] randomFams = prng.ints(0, 5000)
+				.boxed()
+				.distinct()
+				.limit(fams)
+				.toArray(Integer[]::new);
+		return scan(randomFams, maxChoice, current, currentPenalty);
+	}
+
+	double randomBrute(final int rounds, final int fams, final int maxChoice, final double score) {
+		double currentPenalty = getPenalty(assignments);
+		double current = score;
+		for (int i = 0; i < rounds; i++) {
+			final double delta = randomBrute(fams, maxChoice, current, currentPenalty);
+			System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
+			if (delta < 0) {
+				current += delta;
+				currentPenalty = getPenalty(assignments);
+				System.out.println("**** new brute score = " + current + "****");
+
+
+				//CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", current) + "_rb.csv");
+				//CsvUtil.write(assignments, "../../solutions/best.csv");
+
+
+			}
+		}
+		return current - score;
+	}
+
+	double brute(final int fams, final int maxChoice, final double current) {
+		double score = current;
+		double currentPenalty = getPenalty(assignments);
+		boolean improvement;
+		List<List<Integer>> famCombos = Cartisian.product(fams, 5000);
+		do {
+			improvement = false;
+			for (final List<Integer> combo : famCombos) {
+				final Integer[] famIndices = combo.toArray(new Integer[]{});
+				final double delta = scan(famIndices, maxChoice, score, currentPenalty);
+				System.out.println(Arrays.toString(famIndices));
+				if (delta < 0) {
+					score += delta;
+
+					//double p = getPenalty(assignments);
+					//double a = getAccountingCost();
+					//double c = p + a;
+
+					currentPenalty = getPenalty(assignments);
+//					System.out.println(String.format("%.2f", score) + " (" + c + ")");
+//					if(Math.abs(c - score) > 0.00001) {
+//						System.exit(0);
+//					} else {
+
+
+					//CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + "_b.csv");
+					//CsvUtil.write(assignments, "../../solutions/best.csv");
+
+
+					//}
+
+
+
+
+					//improvement = true;
+
+
+
+				}
+			}
+		} while (improvement);
+		return score - current;
 	}
 
 }
