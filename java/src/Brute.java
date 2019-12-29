@@ -31,7 +31,10 @@ public class Brute extends Optimiser {
 				System.out.println(Thread.currentThread().getName() + " " + i);
 				for (int j = i + 1; j < 5000; j++) {
 					for (int k = j + 1; k < 5000; k++) {
-						if(!running) {
+//						if(!running) {
+//							return score;
+//						}
+						if(Thread.currentThread().isInterrupted()) {
 							return score;
 						}
 						final Integer[] famIndices = new Integer[]{i, j, k};
@@ -45,9 +48,12 @@ public class Brute extends Optimiser {
 //							CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + "_b3.csv");
 //							CsvUtil.write(assignments, "../../solutions/best.csv");
 							try {
-								q.put(new Candidate(Arrays.copyOf(assignments, assignments.length), score, "b3"));
+
+									q.put(new Candidate(Arrays.copyOf(assignments, assignments.length), score, "b3"));
+								
 							} catch(InterruptedException e) {
-								Thread.currentThread().interrupt();
+								return score;
+								//Thread.currentThread().interrupt();
 							}
 						}
 					}

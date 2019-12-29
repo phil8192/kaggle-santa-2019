@@ -18,17 +18,18 @@ public class Main {
 		}
 	}
 
-	public static BruteWorker startBruteWorker(final int[][] family_data, int[] assignments, int from, int to,
+	public static Thread startBruteWorker(final int[][] family_data, int[] assignments, int from, int to,
 																						 BlockingQueue<Optimiser.Candidate> q ) {
 		BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q));
-		Executors.defaultThreadFactory().newThread(bw).start();
+		Thread t = Executors.defaultThreadFactory().newThread(bw);
+		t.start();
 		System.out.println("alive...");
-		return bw;
+		return t;
 	}
 
-	public static List<BruteWorker> startBruteWorkers(int[][] family_data, int[] initialAsignments,
+	public static List<Thread> startBruteWorkers(int[][] family_data, int[] initialAsignments,
 																										BlockingQueue<Optimiser.Candidate> q ) {
-		List<BruteWorker> l = new ArrayList<>();
+		List<Thread> l = new ArrayList<>();
 		l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q));
 		l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q));
 		l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q));
@@ -42,9 +43,9 @@ public class Main {
 		return l;
 	}
 
-	public static void killBruteWorkers(List<BruteWorker> bruteWorkerList) {
-		for(BruteWorker bruteWorker : bruteWorkerList) {
-			bruteWorker.brute.kill();
+	public static void killBruteWorkers(List<Thread> bruteWorkerList) {
+		for(Thread bruteWorker : bruteWorkerList) {
+			bruteWorker.interrupt();
 		}
 	}
 
@@ -60,7 +61,7 @@ public class Main {
 		}
 
 		final BlockingQueue<Optimiser.Candidate> q = new SynchronousQueue<>();
-		List<BruteWorker> bruteWorkers = null;
+		List<Thread> bruteWorkers = null;
 		boolean useBrute = true;
 		if(useBrute) {
 
@@ -73,6 +74,8 @@ public class Main {
 			double score = sa.optimise();
 		}
 
+		double best = Double.MAX_VALUE;
+
 		while(true) {
 			try {
 				System.out.println("waiting for new score...");
@@ -81,10 +84,14 @@ public class Main {
 				System.out.println("got new score: " + String.format("%.2f", score));
 				final int[] ass = candidate.getAss();
 				final String method = candidate.getMethod();
+				if(score < best) {
 				CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
 				CsvUtil.write(ass, "../../solutions/best.csv");
-				killBruteWorkers(bruteWorkers);
-				bruteWorkers = startBruteWorkers(family_data, ass, q);
+					System.out.println("killing workers");
+					killBruteWorkers(bruteWorkers);
+					bruteWorkers = startBruteWorkers(family_data, ass, q);
+					best = score;
+				}
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
