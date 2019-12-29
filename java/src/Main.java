@@ -62,39 +62,43 @@ public class Main {
 
 		final BlockingQueue<Optimiser.Candidate> q = new SynchronousQueue<>();
 		List<Thread> bruteWorkers = null;
-		boolean useBrute = true;
+		boolean useBrute = false;
 		if(useBrute) {
 
 			int from = Integer.parseInt(meh[0]);
 			int to = Integer.parseInt(meh[1]);
 			bruteWorkers = startBruteWorkers(family_data, initialAsignments, q);
-		//	double score  = brute.optimise();
+
+			double best = Double.MAX_VALUE;
+
+			while(true) {
+				try {
+					System.out.println("waiting for new score...");
+					Optimiser.Candidate candidate = q.take();
+					final double score = candidate.getScore();
+					System.out.println("got new score: " + String.format("%.2f", score));
+					final int[] ass = candidate.getAss();
+					final String method = candidate.getMethod();
+					if(score < best) {
+						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
+						CsvUtil.write(ass, "../../solutions/best.csv");
+						System.out.println("killing workers");
+						killBruteWorkers(bruteWorkers);
+						bruteWorkers = startBruteWorkers(family_data, ass, q);
+						best = score;
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+
 		} else {
 			SA sa = new SA(family_data, initialAsignments);
-			double score = sa.optimise();
-		}
-
-		double best = Double.MAX_VALUE;
-
-		while(true) {
-			try {
-				System.out.println("waiting for new score...");
-				Optimiser.Candidate candidate = q.take();
-				final double score = candidate.getScore();
-				System.out.println("got new score: " + String.format("%.2f", score));
-				final int[] ass = candidate.getAss();
-				final String method = candidate.getMethod();
-				if(score < best) {
-				CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
-				CsvUtil.write(ass, "../../solutions/best.csv");
-					System.out.println("killing workers");
-					killBruteWorkers(bruteWorkers);
-					bruteWorkers = startBruteWorkers(family_data, ass, q);
-					best = score;
-				}
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
+			double pen = sa.getPenalty(initialAsignments);
+			double acc = sa.getAccountingCost();
+			double score = pen + acc;
+			System.out.println(score + " (" + pen + ") (" + acc + ")");
+			sa.optimise();
 		}
 	}
 }

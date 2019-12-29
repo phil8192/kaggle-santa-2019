@@ -50,7 +50,7 @@ public class Brute extends Optimiser {
 							try {
 
 									q.put(new Candidate(Arrays.copyOf(assignments, assignments.length), score, "b3"));
-								
+
 							} catch(InterruptedException e) {
 								return score;
 								//Thread.currentThread().interrupt();

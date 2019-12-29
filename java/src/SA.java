@@ -13,7 +13,11 @@ public class SA extends Optimiser {
 	private double localMinima(final double temperature, final int maxLoops) {
 		double currentPenalty = getPenalty(assignments);
 		double currentAccount = getAccountingCost();
-		double current = currentPenalty + currentAccount;
+
+		//double current = currentPenalty + currentAccount;
+		//double current = Math.abs(62868 - currentPenalty) + Math.abs(6020.043432 - currentAccount);
+		double current = Math.abs(62868 - currentPenalty) + currentAccount;
+
 		boolean improvement;
 		int max = maxLoops;
 		do {
@@ -33,7 +37,11 @@ public class SA extends Optimiser {
 
 								final double penaltyDelta = getPenaltyDelta(i, assignedDay, candidateDay);
 								final double accountDelta = getAccountingDelta(assignedDay, candidateDay, famSize);
-								final double delta = penaltyDelta + accountDelta;
+
+
+								//final double delta = penaltyDelta + accountDelta;
+								//final double delta = (Math.abs(62868 - (currentPenalty + penaltyDelta)) + Math.abs(6020.043432 - (currentAccount + accountDelta))) - current;
+								final double delta = (Math.abs(62868 - (currentPenalty + penaltyDelta)) + (currentAccount + accountDelta)) - current;
 
 								final double candidateScore = current + delta;
 								if (candidateScore < current || (maxLoops > 0 &&
@@ -62,20 +70,22 @@ public class SA extends Optimiser {
 				}
 			}
 		} while (improvement && (maxLoops == 0 || --max > 0));
-		return current;
+		//return current;
+		return currentPenalty + currentAccount;
 	}
 
 	double optimise() {
-		double temperature = 4;
+		double temperature = 3.5;
 		double coolingSchedule = 0.999999;
-		double best = localMinima(0, 0);
+		//double best = localMinima(0, 0);
+		double best = cost(assignments);
 		System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
 		while (temperature > 0.2) {
 			i++;
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
-			if(i % 100000 == 0) {
+			if(i % 100000 == -1) {
 				// 10 million rounds of random brute force: do not go too far astray
 				final double diff3 = randomBrute(10000000,3 , 5, score);
 				if(diff3 < 0) {
