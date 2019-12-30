@@ -96,7 +96,9 @@ public class SA extends Optimiser {
 //					score += diff3;
 //				}
 //			}
-			System.out.println(String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
+			if(i % 1000 == 0) {
+				System.out.println(String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
+			}
 			if (score < best) {
 				best = score;
 				sanity(assignments);
