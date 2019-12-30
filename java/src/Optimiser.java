@@ -94,6 +94,7 @@ class Optimiser {
 			int famSize = familySize[i];
 			dayCapacities[day] += famSize;
 		}
+		//System.out.println(Thread.currentThread().getName() + " initialised with " + cost(assignments));
 	}
 
 	void sanity(int[] assignments) {
@@ -307,7 +308,7 @@ class Optimiser {
 				return current - score;
 			}
 			final double delta = randomBrute(fams, maxChoice, current, currentPenalty);
-			//System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
+		//	System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
 			if (delta < 0) {
 				current += delta;
 				currentPenalty = getPenalty(assignments);

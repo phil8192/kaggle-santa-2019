@@ -12,6 +12,7 @@ public class Brute extends Optimiser {
 	public Brute(int[][] familyData, int[] initialAssignments, final int from, final int to, final int maxChoice,
 							 final BlockingQueue<Candidate> q, Random prng) {
 		super(familyData, initialAssignments, q, prng);
+		//System.out.println("new brute = " + cost(initialAssignments));
 		this.from = from;
 		this.to = to;
 		this.maxChoice = maxChoice;

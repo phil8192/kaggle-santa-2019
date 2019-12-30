@@ -79,51 +79,52 @@ public class SA extends Optimiser {
 	}
 
 	double optimise() {
-		double temperature = 10;
-		double coolingSchedule = 0.9999;
+		double temperature = 4;
+		double coolingSchedule = 0.999999;
 		//double best = localMinima(0, 0);
 		double best = cost(assignments);
 		System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
-		while (temperature > 0.2) {
+		while (temperature > 0.2 && !Thread.currentThread().isInterrupted()) {
 			i++;
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
-			if(i % 100000 == -1) {
-				// 10 million rounds of random brute force: do not go too far astray
-				final double diff3 = randomBrute(10000000,3 , 5, score);
-				if(diff3 < 0) {
-					score += diff3;
-				}
-			}
+//			if(i % 100000 == 0) {
+//				// 10 million rounds of random brute force: do not go too far astray
+//				final double diff3 = randomBrute(10000000,3 , 5, score);
+//				if(diff3 < 0) {
+//					score += diff3;
+//				}
+//			}
 			System.out.println(String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
 			if (score < best) {
 				best = score;
 				sanity(assignments);
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
-				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
-				CsvUtil.write(assignments, "../../solutions/best.csv");
+//				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
+//				CsvUtil.write(assignments, "../../solutions/best.csv");
+				break;
 			}
 			temperature *= coolingSchedule;
 		}
-		final double diff1 = brute(1, 5, best);
-		if(diff1 < 0) {
-			best += diff1;
-			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
-			CsvUtil.write(assignments, "../../solutions/best.csv");
-		}
-		final double diff2 = brute(2, 5, best);
-		if(diff2 < 0) {
-			best += diff2;
-			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
-			CsvUtil.write(assignments, "../../solutions/best.csv");
-		}
-		final double diff3 = randomBrute(100000000, 3 , 5, best);
-		if(diff3 < 0) {
-			best += diff3;
-			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
-			CsvUtil.write(assignments, "../../solutions/best.csv");
-		}
+//		final double diff1 = brute(1, 5, best);
+//		if(diff1 < 0) {
+//			best += diff1;
+//			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
+//			CsvUtil.write(assignments, "../../solutions/best.csv");
+//		}
+//		final double diff2 = brute(2, 5, best);
+//		if(diff2 < 0) {
+//			best += diff2;
+//			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
+//			CsvUtil.write(assignments, "../../solutions/best.csv");
+//		}
+//		final double diff3 = randomBrute(100000000, 3 , 5, best);
+//		if(diff3 < 0) {
+//			best += diff3;
+//			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
+//			CsvUtil.write(assignments, "../../solutions/best.csv");
+//		}
 		return best;
 	}
 

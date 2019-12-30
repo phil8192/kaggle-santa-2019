@@ -15,8 +15,46 @@ public class Main {
 		@Override
 		public void run() {
 			brute.optimise();
-			System.out.println(Thread.currentThread().getName() + " brute worker. time to die...");
+			//System.out.println(Thread.currentThread().getName() + " brute worker. time to die...");
 		}
+	}
+
+	static class SAWorker implements Runnable {
+		SA sa;
+		BlockingQueue<Candidate> q;
+
+		public SAWorker(SA sa, BlockingQueue<Candidate> q) {
+			this.sa = sa;
+			this.q = q;
+		}
+
+		@Override
+		public void run() {
+			double score = sa.cost(sa.getAssignments());
+			while (!Thread.currentThread().isInterrupted()) {
+				double candidateScore = sa.optimise();
+				if(candidateScore < score) {
+					score = candidateScore;
+					try {
+						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa");
+						q.put(candidate);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				}
+			}
+		}
+	}
+
+	public static Thread startSAWorker(final int[][] family_data, int[] assignments,
+																		 BlockingQueue<Candidate> q, Random prng) {
+		SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng);
+		//BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q, prng));
+		SAWorker saWorker = new SAWorker(sa, q);
+		Thread t = Executors.defaultThreadFactory().newThread(saWorker);
+		t.start();
+		//System.out.println("brute worker alive...");
+		return t;
 	}
 
 	static class RandomBruteWorker implements Runnable {
@@ -28,20 +66,24 @@ public class Main {
 		}
 		@Override
 		public void run() {
+			double score = optimiser.cost(optimiser.getAssignments());
 			while (!Thread.currentThread().isInterrupted()) {
-				double score = optimiser.cost(optimiser.getAssignments());
-				double newScore = score + optimiser.randomBrute(1000000, 3, 3, score);
+
+				long l = System.currentTimeMillis();
+				double newScore = score + optimiser.randomBrute(1000, 3, 5, score);
+				//System.out.println("rnd brute took " + (System.currentTimeMillis() - l) + "ms.");
 				//System.out.println(newScore);
 				if (newScore < score) {
+					score = newScore;
 					try {
-						Candidate candidate = new Candidate(optimiser.getAssignments(), newScore, "rnd_brute");
+						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute");
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 					}
 				}
 			}
-			System.out.println(Thread.currentThread().getName() + " random brute worker. time to die...");
+			//System.out.println(Thread.currentThread().getName() + " random brute worker. time to die...");
 		}
 	}
 
@@ -50,7 +92,7 @@ public class Main {
 		BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q, prng));
 		Thread t = Executors.defaultThreadFactory().newThread(bw);
 		t.start();
-		System.out.println("brute worker alive...");
+		//System.out.println("brute worker alive...");
 		return t;
 	}
 
@@ -60,13 +102,14 @@ public class Main {
 		RandomBruteWorker randomBruteWorker = new RandomBruteWorker(optimiser, q);
 		Thread t = Executors.defaultThreadFactory().newThread(randomBruteWorker);
 		t.start();
-		System.out.println("random brute worker alive...");
+		//System.out.println("random brute worker alive...");
 		return t;
 	}
 
 	public static List<Thread> startBruteWorkers(int[][] family_data, int[] initialAsignments,
 																										BlockingQueue<Candidate> q, Random prng) {
 		List<Thread> l = new ArrayList<>();
+		// 10 brute force threads
 		l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
 		l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
 		l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
@@ -77,7 +120,10 @@ public class Main {
 		l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
 		l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
 		l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
-		l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+
+		l.add(startSAWorker(family_data, initialAsignments, q, prng));
+		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 		return l;
 	}
 
@@ -91,8 +137,9 @@ public class Main {
 		Random prng = new Random();
 
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
-		//int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
-		int[][] starting_solution = CsvUtil.read("../../../submission_71672.50835891288.csv");
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+//		int[][] starting_solution = CsvUtil.read("../../../submission_71672.50835891288.csv");
+		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv");
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
@@ -113,16 +160,17 @@ public class Main {
 
 			while(true) {
 				try {
-					System.out.println("waiting for new score...");
+					//System.out.println("waiting for new score...");
 					Candidate candidate = q.take();
 					final double score = candidate.getScore();
 					final int[] ass = candidate.getAss();
 					final String method = candidate.getMethod();
+					//System.out.println("got new score: " + String.format("%.2f", score) + " (" + method + ")");
 					if(score < best) {
-						System.out.println("got new score: " + String.format("%.2f", score) + " (" + method + ")");
+						System.out.println("score: " + String.format("%.2f", score) + " (" + method + ")");
 						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
 						CsvUtil.write(ass, "../../solutions/best.csv");
-						System.out.println("killing workers");
+						//System.out.println("killing workers");
 						killBruteWorkers(bruteWorkers);
 						bruteWorkers = startBruteWorkers(family_data, ass, q, prng);
 						best = score;
