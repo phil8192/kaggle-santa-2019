@@ -79,13 +79,13 @@ public class SA extends Optimiser {
 	}
 
 	double optimise() {
-		double temperature = 4;
+		double temperature = 3.5;
 		double coolingSchedule = 0.999999;
 		//double best = localMinima(0, 0);
 		double best = cost(assignments);
 		System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
-		while (temperature > 0.2 && !Thread.currentThread().isInterrupted()) {
+		while (temperature > 0.6 && !Thread.currentThread().isInterrupted()) {
 			i++;
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
@@ -103,8 +103,8 @@ public class SA extends Optimiser {
 				best = score;
 				sanity(assignments);
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
-//				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
-//				CsvUtil.write(assignments, "../../solutions/best.csv");
+				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
+				CsvUtil.write(assignments, "../../solutions/best.csv");
 				break;
 			}
 			temperature *= coolingSchedule;

@@ -20,21 +20,25 @@ public class Main {
 	}
 
 	static class SAWorker implements Runnable {
-		SA sa;
 		BlockingQueue<Candidate> q;
+		final int[][] family_data;
+		final int[] assignments;
+		final Random prng;
 
-		public SAWorker(SA sa, BlockingQueue<Candidate> q) {
-			this.sa = sa;
+		public SAWorker(final int[][] family_data, final int[] assignemnts, final Random prng, BlockingQueue<Candidate> q) {
 			this.q = q;
+			this.family_data = family_data;
+			this.assignments = Arrays.copyOf(assignemnts, assignemnts.length);
+			this.prng = prng;
 		}
 
 		@Override
 		public void run() {
-			double score = sa.cost(sa.getAssignments());
 			while (!Thread.currentThread().isInterrupted()) {
+				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng);
+				double score = sa.cost(sa.getAssignments());
 				double candidateScore = sa.optimise();
 				if(candidateScore < score) {
-					score = candidateScore;
 					try {
 						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa");
 						q.put(candidate);
@@ -48,9 +52,7 @@ public class Main {
 
 	public static Thread startSAWorker(final int[][] family_data, int[] assignments,
 																		 BlockingQueue<Candidate> q, Random prng) {
-		SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng);
-		//BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q, prng));
-		SAWorker saWorker = new SAWorker(sa, q);
+		SAWorker saWorker = new SAWorker(family_data, assignments, prng, q);
 		Thread t = Executors.defaultThreadFactory().newThread(saWorker);
 		t.start();
 		//System.out.println("brute worker alive...");
@@ -149,7 +151,7 @@ public class Main {
 
 		final BlockingQueue<Candidate> q = new SynchronousQueue<>();
 		List<Thread> bruteWorkers = null;
-		boolean useBrute = true;
+		boolean useBrute = false;
 		if(useBrute) {
 
 			int from = Integer.parseInt(meh[0]);
