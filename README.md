@@ -1,7 +1,8 @@
 # Kaggle Santa's workshop tour 2019
 
-Code for Kaggle's annual optimisation competition. Code for last year can be
-found [here](https://github.com/phil8192/tsp-java).
+Code for Kaggle's annual optimisation
+[competition](https://www.kaggle.com/c/santa-workshop-tour-2019).
+Code for last year can be found [here](https://github.com/phil8192/tsp-java).
 
 ## Features
 
