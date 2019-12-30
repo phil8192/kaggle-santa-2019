@@ -1,7 +1,9 @@
+import java.util.Random;
+
 public class SA extends Optimiser {
 
-	SA(int[][] familyData, int[] initialAssignments) {
-		super(familyData, initialAssignments, null);
+	SA(int[][] familyData, int[] initialAssignments, Random prng) {
+		super(familyData, initialAssignments, null, prng);
 	}
 
 	private double acceptanceProbability(final double oldScore, final double newScore, final double temperature) {
@@ -14,9 +16,10 @@ public class SA extends Optimiser {
 		double currentPenalty = getPenalty(assignments);
 		double currentAccount = getAccountingCost();
 
-		//double current = currentPenalty + currentAccount;
+		double current = currentPenalty + currentAccount;
 		//double current = Math.abs(62868 - currentPenalty) + Math.abs(6020.043432 - currentAccount);
-		double current = Math.abs(62868 - currentPenalty) + currentAccount;
+		//double current = Math.abs(62868 - currentPenalty) + currentAccount;
+		//double current = currentPenalty + Math.abs(6020.043432 - currentAccount);
 
 		boolean improvement;
 		int max = maxLoops;
@@ -39,9 +42,10 @@ public class SA extends Optimiser {
 								final double accountDelta = getAccountingDelta(assignedDay, candidateDay, famSize);
 
 
-								//final double delta = penaltyDelta + accountDelta;
-								//final double delta = (Math.abs(62868 - (currentPenalty + penaltyDelta)) + Math.abs(6020.043432 - (currentAccount + accountDelta))) - current;
-								final double delta = (Math.abs(62868 - (currentPenalty + penaltyDelta)) + (currentAccount + accountDelta)) - current;
+								final double delta = penaltyDelta + accountDelta;
+								//final double delta = ((Math.abs(62868 - (currentPenalty + penaltyDelta)) + Math.abs(6020.043432 - (currentAccount + accountDelta)))) - current;
+								//final double delta = ((Math.abs(62868 - (currentPenalty + penaltyDelta)) + (currentAccount + accountDelta))) - current;
+								//final double delta = ((currentPenalty + penaltyDelta) + Math.abs(6020.043432 - (currentAccount + accountDelta))) - current;
 
 								final double candidateScore = current + delta;
 								if (candidateScore < current || (maxLoops > 0 &&
@@ -75,8 +79,8 @@ public class SA extends Optimiser {
 	}
 
 	double optimise() {
-		double temperature = 3.5;
-		double coolingSchedule = 0.999999;
+		double temperature = 10;
+		double coolingSchedule = 0.9999;
 		//double best = localMinima(0, 0);
 		double best = cost(assignments);
 		System.out.println("best = " + String.format("%.2f", best));

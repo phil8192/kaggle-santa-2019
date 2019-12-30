@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 
 public class Brute extends Optimiser {
@@ -9,8 +10,8 @@ public class Brute extends Optimiser {
 	private boolean running = true;
 
 	public Brute(int[][] familyData, int[] initialAssignments, final int from, final int to, final int maxChoice,
-							 final BlockingQueue<Candidate> q) {
-		super(familyData, initialAssignments, q);
+							 final BlockingQueue<Candidate> q, Random prng) {
+		super(familyData, initialAssignments, q, prng);
 		this.from = from;
 		this.to = to;
 		this.maxChoice = maxChoice;

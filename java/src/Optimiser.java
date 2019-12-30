@@ -35,35 +35,16 @@ class Optimiser {
 	final int[][] familyPrefs;
 	final int[] familySize;
 
-	final Random prng = new Random();
+	final Random prng;
 
 	final BlockingQueue<Candidate> q;
 
-	final class Candidate {
-		private final int[] ass;
-		private final double score;
-		private final String method;
-
-		public Candidate(int[] ass, double score, final String method) {
-			this.ass = ass;
-			this.score = score;
-			this.method = method;
-		}
-
-		public int[] getAss() {
-			return ass;
-		}
-
-		public double getScore() {
-			return score;
-		}
-
-		public String getMethod() {
-			return method;
-		}
+	public int[] getAssignments() {
+		return assignments;
 	}
 
-	Optimiser(int[][] familyData, int[] initialAssignments, final BlockingQueue<Candidate> q) {
+	Optimiser(int[][] familyData, int[] initialAssignments, final BlockingQueue<Candidate> q, final Random prng) {
+		this.prng = prng;
 		this.q = q;
 		this.assignments = initialAssignments;
 		this.familyPrefs = new int[5000][10];
@@ -322,18 +303,14 @@ class Optimiser {
 		double currentPenalty = getPenalty(assignments);
 		double current = score;
 		for (int i = 0; i < rounds; i++) {
+			if(Thread.currentThread().isInterrupted()) {
+				return current - score;
+			}
 			final double delta = randomBrute(fams, maxChoice, current, currentPenalty);
-			System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
+			//System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
 			if (delta < 0) {
 				current += delta;
 				currentPenalty = getPenalty(assignments);
-				System.out.println("**** new brute score = " + current + "****");
-
-
-				//CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", current) + "_rb.csv");
-				//CsvUtil.write(assignments, "../../solutions/best.csv");
-
-
 			}
 		}
 		return current - score;
