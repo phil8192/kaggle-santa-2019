@@ -3,8 +3,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
+
+	static AtomicInteger tripwire = new AtomicInteger(0);
 
 	static class BruteWorker implements Runnable {
 		Brute brute;
@@ -45,12 +48,16 @@ public class Main {
 				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng, temperature, coolingSchedule);
 				double score = sa.cost(sa.getAssignments());
 				double candidateScore = sa.optimise();
+				//System.out.println("sa: " + score + " > " + candidateScore);
 				if(candidateScore < score) {
 					try {
+						tripwire.incrementAndGet();
 						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa_"+id);
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
+					} finally {
+						tripwire.decrementAndGet();
 					}
 				}
 			}
@@ -80,16 +87,19 @@ public class Main {
 			while (!Thread.currentThread().isInterrupted()) {
 
 				long l = System.currentTimeMillis();
-				double newScore = score + optimiser.randomBrute(1000, 3, 5, score);
+				double newScore = score + optimiser.randomBrute(1000, 4, 5, score);
 				//System.out.println("rnd brute took " + (System.currentTimeMillis() - l) + "ms.");
 				//System.out.println(newScore);
 				if (newScore < score) {
 					score = newScore;
 					try {
+						tripwire.incrementAndGet();
 						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute");
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
+					} finally {
+						tripwire.decrementAndGet();
 					}
 				}
 			}
@@ -134,8 +144,10 @@ public class Main {
 		// 2 sa threads (slow, fast)
 		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
 		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.999999, "fast"));
-		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
-		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+
+		// 1 random brute worker
+		l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+
 		return l;
 	}
 
@@ -149,9 +161,8 @@ public class Main {
 		Random prng = new Random();
 
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
-		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
-//		int[][] starting_solution = CsvUtil.read("../../../submission_71672.50835891288.csv");
-		//int[][] starting_solution = CsvUtil.read("/tmp/lala.csv");
+//		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv");
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
@@ -180,11 +191,14 @@ public class Main {
 					//System.out.println("got new score: " + String.format("%.2f", score) + " (" + method + ")");
 					if(score < best) {
 						System.out.println("score: " + String.format("%.2f", score) + " (" + method + ")");
-						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
-						CsvUtil.write(ass, "../../solutions/best.csv");
+						CsvUtil.write(ass, "../../solutions2/" + String.format("%.2f", score) + "_" + method + ".csv");
+						CsvUtil.write(ass, "../../solutions2/best.csv");
 						//System.out.println("killing workers");
-						killBruteWorkers(bruteWorkers);
-						bruteWorkers = startBruteWorkers(family_data, ass, q, prng);
+
+						if(tripwire.get() == 0) { // only killall if noting waiting to share a result.
+							killBruteWorkers(bruteWorkers);
+							bruteWorkers = startBruteWorkers(family_data, ass, q, prng);
+						}
 						best = score;
 					}
 				} catch (InterruptedException e) {
