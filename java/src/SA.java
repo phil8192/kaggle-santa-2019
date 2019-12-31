@@ -2,8 +2,13 @@ import java.util.Random;
 
 public class SA extends Optimiser {
 
-	SA(int[][] familyData, int[] initialAssignments, Random prng) {
+	private double temperature; // = 3;
+	private final double coolingSchedule;// = 0.9999999;
+
+	SA(int[][] familyData, int[] initialAssignments, Random prng, double temperature, double coolingSchedule) {
 		super(familyData, initialAssignments, null, prng);
+		this.temperature = temperature;
+		this.coolingSchedule = coolingSchedule;
 	}
 
 	private double acceptanceProbability(final double oldScore, final double newScore, final double temperature) {
@@ -79,13 +84,11 @@ public class SA extends Optimiser {
 	}
 
 	double optimise() {
-		double temperature = 3.5;
-		double coolingSchedule = 0.999999;
 		//double best = localMinima(0, 0);
 		double best = cost(assignments);
 		System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
-		while (temperature > 0.6 && !Thread.currentThread().isInterrupted()) {
+		while (temperature > 0.7 && !Thread.currentThread().isInterrupted()) {
 			i++;
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
@@ -97,15 +100,15 @@ public class SA extends Optimiser {
 //				}
 //			}
 			if(i % 1000 == 0) {
-				System.out.println(String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
+				System.out.println(Thread.currentThread().getName() + " " + String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
 			}
 			if (score < best) {
 				best = score;
 				sanity(assignments);
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
-				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
-				CsvUtil.write(assignments, "../../solutions/best.csv");
-				break;
+//				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
+//				CsvUtil.write(assignments, "../../solutions/best.csv");
+//				break;
 			}
 			temperature *= coolingSchedule;
 		}

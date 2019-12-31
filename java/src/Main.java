@@ -24,18 +24,23 @@ public class Main {
 		final int[][] family_data;
 		final int[] assignments;
 		final Random prng;
+		double temperature;
+		double coolingSchedule;
 
-		public SAWorker(final int[][] family_data, final int[] assignemnts, final Random prng, BlockingQueue<Candidate> q) {
+		public SAWorker(final int[][] family_data, final int[] assignemnts, final Random prng, BlockingQueue<Candidate> q,
+										double temperature, double coolingSchedule) {
 			this.q = q;
 			this.family_data = family_data;
 			this.assignments = Arrays.copyOf(assignemnts, assignemnts.length);
 			this.prng = prng;
+			this.temperature = temperature;
+			this.coolingSchedule = coolingSchedule;
 		}
 
 		@Override
 		public void run() {
 			while (!Thread.currentThread().isInterrupted()) {
-				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng);
+				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng, temperature, coolingSchedule);
 				double score = sa.cost(sa.getAssignments());
 				double candidateScore = sa.optimise();
 				if(candidateScore < score) {
@@ -51,8 +56,9 @@ public class Main {
 	}
 
 	public static Thread startSAWorker(final int[][] family_data, int[] assignments,
-																		 BlockingQueue<Candidate> q, Random prng) {
-		SAWorker saWorker = new SAWorker(family_data, assignments, prng, q);
+																		 BlockingQueue<Candidate> q, Random prng,
+																		 double temperature, double coolingSchedule) {
+		SAWorker saWorker = new SAWorker(family_data, assignments, prng, q, temperature, coolingSchedule);
 		Thread t = Executors.defaultThreadFactory().newThread(saWorker);
 		t.start();
 		//System.out.println("brute worker alive...");
@@ -123,7 +129,9 @@ public class Main {
 		l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
 		l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
 
-		l.add(startSAWorker(family_data, initialAsignments, q, prng));
+		// 2 sa threads (slow, fast)
+		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999));
+		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.999999));
 		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 		return l;
@@ -151,7 +159,7 @@ public class Main {
 
 		final BlockingQueue<Candidate> q = new SynchronousQueue<>();
 		List<Thread> bruteWorkers = null;
-		boolean useBrute = false;
+		boolean useBrute = true;
 		if(useBrute) {
 
 			int from = Integer.parseInt(meh[0]);
@@ -183,7 +191,7 @@ public class Main {
 			}
 
 		} else {
-			SA sa = new SA(family_data, initialAsignments, prng);
+			SA sa = new SA(family_data, initialAsignments, prng, 3,999999);
 			double pen = sa.getPenalty(initialAsignments);
 			double acc = sa.getAccountingCost();
 			double score = pen + acc;
