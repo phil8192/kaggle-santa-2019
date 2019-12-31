@@ -26,15 +26,17 @@ public class Main {
 		final Random prng;
 		double temperature;
 		double coolingSchedule;
+		String id;
 
 		public SAWorker(final int[][] family_data, final int[] assignemnts, final Random prng, BlockingQueue<Candidate> q,
-										double temperature, double coolingSchedule) {
+										double temperature, double coolingSchedule, String id) {
 			this.q = q;
 			this.family_data = family_data;
 			this.assignments = Arrays.copyOf(assignemnts, assignemnts.length);
 			this.prng = prng;
 			this.temperature = temperature;
 			this.coolingSchedule = coolingSchedule;
+			this.id = id;
 		}
 
 		@Override
@@ -45,7 +47,7 @@ public class Main {
 				double candidateScore = sa.optimise();
 				if(candidateScore < score) {
 					try {
-						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa");
+						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa_"+id);
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
@@ -57,8 +59,8 @@ public class Main {
 
 	public static Thread startSAWorker(final int[][] family_data, int[] assignments,
 																		 BlockingQueue<Candidate> q, Random prng,
-																		 double temperature, double coolingSchedule) {
-		SAWorker saWorker = new SAWorker(family_data, assignments, prng, q, temperature, coolingSchedule);
+																		 double temperature, double coolingSchedule, String id) {
+		SAWorker saWorker = new SAWorker(family_data, assignments, prng, q, temperature, coolingSchedule, id);
 		Thread t = Executors.defaultThreadFactory().newThread(saWorker);
 		t.start();
 		//System.out.println("brute worker alive...");
@@ -130,8 +132,8 @@ public class Main {
 		l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
 
 		// 2 sa threads (slow, fast)
-		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999));
-		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.999999));
+		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
+		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.999999, "fast"));
 		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 		return l;

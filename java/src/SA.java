@@ -108,7 +108,7 @@ public class SA extends Optimiser {
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
 //				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
 //				CsvUtil.write(assignments, "../../solutions/best.csv");
-//				break;
+  				break;
 			}
 			temperature *= coolingSchedule;
 		}
