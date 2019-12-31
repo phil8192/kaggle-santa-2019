@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
 
-	static AtomicInteger tripwire = new AtomicInteger(0);
+	//static AtomicInteger tripwire = new AtomicInteger(0);
 
 	static class BruteWorker implements Runnable {
 		Brute brute;
@@ -17,7 +17,12 @@ public class Main {
 
 		@Override
 		public void run() {
-			brute.optimise();
+			try {
+				Thread.sleep(60*1000);
+				brute.optimise();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
 			//System.out.println(Thread.currentThread().getName() + " brute worker. time to die...");
 		}
 	}
@@ -51,13 +56,13 @@ public class Main {
 				//System.out.println("sa: " + score + " > " + candidateScore);
 				if(candidateScore < score) {
 					try {
-						tripwire.incrementAndGet();
+						//tripwire.incrementAndGet();
 						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa_"+id);
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 					} finally {
-						tripwire.decrementAndGet();
+						//tripwire.decrementAndGet();
 					}
 				}
 			}
@@ -93,13 +98,13 @@ public class Main {
 				if (newScore < score) {
 					score = newScore;
 					try {
-						tripwire.incrementAndGet();
+						//tripwire.incrementAndGet();
 						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute");
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 					} finally {
-						tripwire.decrementAndGet();
+						//tripwire.decrementAndGet();
 					}
 				}
 			}
@@ -127,19 +132,8 @@ public class Main {
 	}
 
 	public static List<Thread> startBruteWorkers(int[][] family_data, int[] initialAsignments,
-																										BlockingQueue<Candidate> q, Random prng) {
+																										BlockingQueue<Candidate> q, Random prng, boolean brute) {
 		List<Thread> l = new ArrayList<>();
-		// 10 brute force threads
-		l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
-		l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
 
 		// 2 sa threads (slow, fast)
 		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
@@ -148,6 +142,19 @@ public class Main {
 		// 1 random brute worker
 		l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 
+		if(brute) {
+			// 10 brute force threads
+			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
+		}
 		return l;
 	}
 
@@ -175,15 +182,14 @@ public class Main {
 		boolean useBrute = true;
 		if(useBrute) {
 
-			int from = Integer.parseInt(meh[0]);
-			int to = Integer.parseInt(meh[1]);
-			bruteWorkers = startBruteWorkers(family_data, initialAsignments, q, prng);
+			bruteWorkers = startBruteWorkers(family_data, initialAsignments, q, prng, true);
 
 			double best = Double.MAX_VALUE;
 
 			while(true) {
 				try {
 					//System.out.println("waiting for new score...");
+					long l = System.currentTimeMillis();
 					Candidate candidate = q.take();
 					final double score = candidate.getScore();
 					final int[] ass = candidate.getAss();
@@ -195,10 +201,11 @@ public class Main {
 						CsvUtil.write(ass, "../../solutions2/best.csv");
 						//System.out.println("killing workers");
 
-						if(tripwire.get() == 0) { // only killall if noting waiting to share a result.
+						//if(tripwire.get() == 0) { // only killall if noting waiting to share a result.
+							System.out.println("killall");
 							killBruteWorkers(bruteWorkers);
-							bruteWorkers = startBruteWorkers(family_data, ass, q, prng);
-						}
+							bruteWorkers = startBruteWorkers(family_data, ass, q, prng, true);
+						//}
 						best = score;
 					}
 				} catch (InterruptedException e) {

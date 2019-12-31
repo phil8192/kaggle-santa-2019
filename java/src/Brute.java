@@ -50,14 +50,14 @@ public class Brute extends Optimiser {
 //							CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + "_b3.csv");
 //							CsvUtil.write(assignments, "../../solutions/best.csv");
 							try {
-									Main.tripwire.incrementAndGet();
+									//Main.tripwire.incrementAndGet();
 									q.put(new Candidate(Arrays.copyOf(assignments, assignments.length), score, "b3"));
 
 							} catch(InterruptedException e) {
 								return score;
 								//Thread.currentThread().interrupt();
 							} finally {
-								Main.tripwire.decrementAndGet();
+								//Main.tripwire.decrementAndGet();
 							}
 						}
 					}
