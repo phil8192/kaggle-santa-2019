@@ -18,7 +18,7 @@ public class Main {
 		@Override
 		public void run() {
 			try {
-				Thread.sleep(60*1000);
+				Thread.sleep(5*1000);
 				brute.optimise();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
@@ -136,25 +136,37 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 		// 2 sa threads (slow, fast)
-		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
-		l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.999999, "fast"));
+		//l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+
 
 		// 1 random brute worker
-		l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 
-		if(brute) {
-			// 10 brute force threads
-			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
-		}
+//		if(brute) {
+//			// 10 brute force threads
+//			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
+//		}
 		return l;
 	}
 
@@ -168,8 +180,8 @@ public class Main {
 		Random prng = new Random();
 
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
-//		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
-		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv");
+		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
+//		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv");
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
@@ -197,8 +209,8 @@ public class Main {
 					//System.out.println("got new score: " + String.format("%.2f", score) + " (" + method + ")");
 					if(score < best) {
 						System.out.println("score: " + String.format("%.2f", score) + " (" + method + ")");
-						CsvUtil.write(ass, "../../solutions2/" + String.format("%.2f", score) + "_" + method + ".csv");
-						CsvUtil.write(ass, "../../solutions2/best.csv");
+						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
+						CsvUtil.write(ass, "../../solutions/best.csv");
 						//System.out.println("killing workers");
 
 						//if(tripwire.get() == 0) { // only killall if noting waiting to share a result.
