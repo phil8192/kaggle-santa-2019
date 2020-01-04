@@ -137,36 +137,36 @@ public class Main {
 
 		// 2 sa threads (slow, fast)
 		//l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(1337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 4, 0.999999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 4, 0.9999999, "slow"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.9999999, "slow"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
 
 
 		// 1 random brute worker
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
 
-//		if(brute) {
-//			// 10 brute force threads
-//			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
-//		}
+		if(brute) {
+			// 10 brute force threads
+			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
+			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
+		}
 		return l;
 	}
 
