@@ -135,20 +135,18 @@ public class Main {
 																										BlockingQueue<Candidate> q, Random prng, boolean brute) {
 		List<Thread> l = new ArrayList<>();
 
-		// 2 sa threads (slow, fast)
-		//l.add(startSAWorker(family_data, initialAsignments, q, prng, 3, 0.9999999, "slow"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 4, 0.999999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 4, 0.9999999, "slow"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.9999999, "slow"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt(31337)), 3, 0.999999, "fast"));
+
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, 0.99999, "fast_6"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2, 0.999999, "slow_2"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow_3"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, 0.999999, "slow_4"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, 0.999999, "slow_5"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, 0.999999, "slow_6"));
+//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 7, 0.999999, "slow_7"));
 
 
 		// 1 random brute worker

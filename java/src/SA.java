@@ -88,7 +88,7 @@ public class SA extends Optimiser {
 		double best = cost(assignments);
 		//System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
-		while (temperature > 0.7 && !Thread.currentThread().isInterrupted()) {
+		while (temperature > 0.3 && !Thread.currentThread().isInterrupted()) {
 			i++;
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
