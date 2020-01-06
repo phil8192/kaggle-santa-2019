@@ -53,8 +53,17 @@ public class Main {
 				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng, temperature, coolingSchedule);
 				double score = sa.cost(sa.getAssignments());
 				double candidateScore = sa.optimise();
-				//System.out.println("sa: " + score + " > " + candidateScore);
+
+
+
 				if(candidateScore < score) {
+
+//					double lala = sa.cost(sa.getAssignments());
+//					if(Math.abs(lala-candidateScore) > 0.00001) {
+//						System.out.println(lala + " != " + candidateScore);
+//						System.exit(0);
+//					}
+
 					try {
 						//tripwire.incrementAndGet();
 						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa_"+id);
@@ -82,24 +91,28 @@ public class Main {
 	static class RandomBruteWorker implements Runnable {
 		Optimiser optimiser;
 		BlockingQueue<Candidate> q;
-		public RandomBruteWorker(Optimiser optimiser, BlockingQueue<Candidate> q) {
+		int fam;
+		String name;
+		public RandomBruteWorker(Optimiser optimiser, BlockingQueue<Candidate> q, int fam, String name) {
 			this.optimiser = optimiser;
 			this.q = q;
+			this.fam = fam;
+			this.name = name;
 		}
 		@Override
 		public void run() {
 			double score = optimiser.cost(optimiser.getAssignments());
 			while (!Thread.currentThread().isInterrupted()) {
 
-				long l = System.currentTimeMillis();
-				double newScore = score + optimiser.randomBrute(1000, 4, 5, score);
-				//System.out.println("rnd brute took " + (System.currentTimeMillis() - l) + "ms.");
+				//long l = System.currentTimeMillis();
+				double newScore = score + optimiser.randomBrute(1000, fam, 5, score);
+				//System.out.println("rnd brute "+name+" took " + (System.currentTimeMillis() - l) + "ms.");
 				//System.out.println(newScore);
 				if (newScore < score) {
 					score = newScore;
 					try {
 						//tripwire.incrementAndGet();
-						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute");
+						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute_"+name);
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
@@ -122,9 +135,9 @@ public class Main {
 	}
 
 	public static Thread startRandomBruteWorker(final int[][] family_data, int[] assignments,
-																							BlockingQueue<Candidate> q, Random prng) {
+																							BlockingQueue<Candidate> q, Random prng, int fam, String name) {
 		Optimiser optimiser = new Optimiser(family_data, Arrays.copyOf(assignments, assignments.length), q, prng);
-		RandomBruteWorker randomBruteWorker = new RandomBruteWorker(optimiser, q);
+		RandomBruteWorker randomBruteWorker = new RandomBruteWorker(optimiser, q, fam, name);
 		Thread t = Executors.defaultThreadFactory().newThread(randomBruteWorker);
 		t.start();
 		//System.out.println("random brute worker alive...");
@@ -136,21 +149,19 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 
+		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, 0.99999, "fast_6"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2, 0.999999, "slow_2"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow_3"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, 0.999999, "slow_4"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, 0.999999, "slow_5"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, 0.999999, "slow_6"));
-//		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 7, 0.999999, "slow_7"));
-
 
 		// 1 random brute worker
-		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, prng));
+
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, "6"));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 7, "7"));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 8, "8"));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 9, "9"));
+//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 10,"10"));
+
 
 		if(brute) {
 			// 10 brute force threads

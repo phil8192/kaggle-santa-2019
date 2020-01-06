@@ -30,8 +30,11 @@ public class SA extends Optimiser {
 		int max = maxLoops;
 		do {
 			improvement = false;
-			fams:
-			for (int i = 0; i < assignments.length; i++) { // each family i
+			//for (int i = 0; i < assignments.length; i++) { // each family i
+			final int start = prng.nextInt(assignments.length);
+			fams: for(int k = 0; k < assignments.length; k++) {
+			//for(int i = assignments.length; --i >= 0; ) {
+				final int i = (k+start) % assignments.length;
 				final int[] prefs = familyPrefs[i];
 				final int famSize = familySize[i];
 				final int assignedDay = assignments[i];
@@ -45,14 +48,9 @@ public class SA extends Optimiser {
 
 								final double penaltyDelta = getPenaltyDelta(i, assignedDay, candidateDay);
 								final double accountDelta = getAccountingDelta(assignedDay, candidateDay, famSize);
-
-
 								final double delta = penaltyDelta + accountDelta;
-								//final double delta = ((Math.abs(62868 - (currentPenalty + penaltyDelta)) + Math.abs(6020.043432 - (currentAccount + accountDelta)))) - current;
-								//final double delta = ((Math.abs(62868 - (currentPenalty + penaltyDelta)) + (currentAccount + accountDelta))) - current;
-								//final double delta = ((currentPenalty + penaltyDelta) + Math.abs(6020.043432 - (currentAccount + accountDelta))) - current;
-
 								final double candidateScore = current + delta;
+
 								if (candidateScore < current || (maxLoops > 0 &&
 										acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble())) {
 									dayCapacities[assignedDay] -= famSize;
@@ -88,10 +86,10 @@ public class SA extends Optimiser {
 		double best = cost(assignments);
 		//System.out.println("best = " + String.format("%.2f", best));
 		int i = 0;
-		while (temperature > 0.3 && !Thread.currentThread().isInterrupted()) {
+		while (temperature > 0.1 && !Thread.currentThread().isInterrupted()) {
 			i++;
-			localMinima(temperature, 1);
-			double score = localMinima(0, 0);
+			double score = localMinima(temperature, 1);
+			//double score = localMinima(0, 0);
 //			if(i % 100000 == 0) {
 //				// 10 million rounds of random brute force: do not go too far astray
 //				final double diff3 = randomBrute(10000000,3 , 5, score);
@@ -133,5 +131,69 @@ public class SA extends Optimiser {
 		return best;
 	}
 
+	double optimise2() {
+		double best = cost(assignments);
+		double current = best;
+		double currentPenalty = getPenalty(assignments);
+		double currentAccount = getAccountingCost();
+
+		int x = 0;
+		while (temperature > 0.01 && !Thread.currentThread().isInterrupted()) {
+			final int start = prng.nextInt(assignments.length);
+			fams: for(int k = 0; k < assignments.length; k++) {
+				final int i = (k+start) % assignments.length;
+				final int[] prefs = familyPrefs[i];
+				final int famSize = familySize[i];
+				final int assignedDay = assignments[i];
+				final int assignedDayCap = dayCapacities[assignedDay];
+				if (assignedDayCap - famSize >= MIN_PPL) {
+
+					final int xx = 0;//prng.nextInt(10);
+					for (int jj = 0; jj < 10; jj++) {
+						final int j = (jj+xx)%10;
+						final int candidateDay = prefs[j];
+						if (candidateDay != assignedDay) {
+							final int candidateDayCap = dayCapacities[candidateDay];
+							if (candidateDayCap + famSize <= MAX_PPL) {
+
+								final double penaltyDelta = getPenaltyDelta(i, assignedDay, candidateDay);
+								final double accountDelta = getAccountingDelta(assignedDay, candidateDay, famSize);
+								final double delta = penaltyDelta + accountDelta;
+								final double candidateScore = current + delta;
+
+								if (candidateScore < current
+										|| acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble()) {
+
+									dayCapacities[assignedDay] -= famSize;
+									dayCapacities[candidateDay] += famSize;
+									assignments[i] = candidateDay;
+
+									current += delta;
+									currentPenalty += penaltyDelta;
+									currentAccount += accountDelta;
+
+									if(candidateScore < best) {
+										if(Math.abs(candidateScore-best) > 0.0001) {
+											System.out.println(candidateScore + " < " + best);
+											return candidateScore;
+										}
+									}
+
+									break fams;
+								}
+							}
+						}
+					}
+				}
+			}
+			temperature *= coolingSchedule;
+			x++;
+			if(x % 1000 == 0) {
+				System.out.println(Thread.currentThread().getName() + " " + String.format("%.2f", current) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + x);
+			}
+		}
+		return currentPenalty + currentAccount;
+		//return best;
+	}
 
 }
