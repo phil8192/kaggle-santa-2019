@@ -228,7 +228,7 @@ class Optimiser {
 
 
 		for (final List<Integer> prod : prods) { // for each set of choices
-			//System.out.println(prod);
+		//	System.out.println(prod);
 
 			double penaltyDelta = 0.0;
 
@@ -239,6 +239,7 @@ class Optimiser {
 				final int choice = prod.get(i);
 				final int assignedDay = assignments[fam];
 				final int candidateDay = familyPrefs[fam][choice];
+
 
 				// assign this family
 				dayCapacities[assignedDay] -= famSize;
@@ -268,6 +269,7 @@ class Optimiser {
 
 				//System.out.println("pen = " + penalty + " _pen = " + _penalty);
 				final double accountingCost = getAccountingCost();
+
 				final double candidateCost = _penalty + accountingCost;
 				final double delta = candidateCost - current;
 				if (delta < 0) {
@@ -320,14 +322,17 @@ class Optimiser {
 	double brute(final int fams, final int maxChoice, final double current) {
 		double score = current;
 		double currentPenalty = getPenalty(assignments);
+
 		boolean improvement;
 		List<List<Integer>> famCombos = Cartisian.product(fams, 5000);
+		int i = 1;
 		do {
 			improvement = false;
 			for (final List<Integer> combo : famCombos) {
 				final Integer[] famIndices = combo.toArray(new Integer[]{});
+				System.out.println(i + ": " + Arrays.toString(famIndices));
 				final double delta = scan(famIndices, maxChoice, score, currentPenalty);
-				System.out.println(Arrays.toString(famIndices));
+
 				if (delta < 0) {
 					score += delta;
 
@@ -350,8 +355,8 @@ class Optimiser {
 
 
 
-
-					//improvement = true;
+i++;
+					improvement = true;
 
 
 

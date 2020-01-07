@@ -88,8 +88,8 @@ public class SA extends Optimiser {
 		int i = 0;
 		while (temperature > 0.1 && !Thread.currentThread().isInterrupted()) {
 			i++;
-			double score = localMinima(temperature, 1);
-			//double score = localMinima(0, 0);
+			localMinima(temperature, 1);
+			double score = localMinima(0, 0);
 //			if(i % 100000 == 0) {
 //				// 10 million rounds of random brute force: do not go too far astray
 //				final double diff3 = randomBrute(10000000,3 , 5, score);

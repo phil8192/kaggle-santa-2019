@@ -149,8 +149,12 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
-		l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.99999, "fast"));
+		for(int i = 0; i < 11; i++) {
+			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
+		}
+//		for(int i = 0; i < 5; i++) {
+//			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2.5, 0.99999, "fast"));
+//		}
 
 		// 1 random brute worker
 
@@ -163,19 +167,19 @@ public class Main {
 //		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 10,"10"));
 
 
-		if(brute) {
-			// 10 brute force threads
-			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
-			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
-		}
+//		if(brute) {
+//			// 10 brute force threads
+//			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
+//			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
+//		}
 		return l;
 	}
 
@@ -235,12 +239,17 @@ public class Main {
 			}
 
 		} else {
-			SA sa = new SA(family_data, initialAsignments, prng, 3,999999);
-			double pen = sa.getPenalty(initialAsignments);
-			double acc = sa.getAccountingCost();
-			double score = pen + acc;
-			System.out.println(score + " (" + pen + ") (" + acc + ")");
-			sa.optimise();
+//			SA sa = new SA(family_data, initialAsignments, prng, 3,999999);
+//			double pen = sa.getPenalty(initialAsignments);
+//			double acc = sa.getAccountingCost();
+//			double score = pen + acc;
+//			System.out.println(score + " (" + pen + ") (" + acc + ")");
+//			sa.optimise();
+			Optimiser optimiser = new Optimiser(family_data, initialAsignments, q, prng);
+			double initial = optimiser.cost(initialAsignments);
+			double delta = optimiser.brute(2, 5, initial);
+			System.out.println(delta);
+
 		}
 	}
 }
