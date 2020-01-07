@@ -30,7 +30,7 @@ public class Brute extends Optimiser {
 		do {
 			improvement = false;
 			for (int i = from; i < to; i++) {
-				System.out.println(Thread.currentThread().getName() + " " + i);
+				//System.out.println(Thread.currentThread().getName() + " " + i);
 				for (int j = i + 1; j < 5000; j++) {
 					for (int k = j + 1; k < 5000; k++) {
 //						if(!running) {

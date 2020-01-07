@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -125,12 +122,34 @@ public class Main {
 		}
 	}
 
-	public static Thread startBruteWorker(final int[][] family_data, int[] assignments, int from, int to,
-																				BlockingQueue<Candidate> q, Random prng) {
-		BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q, prng));
-		Thread t = Executors.defaultThreadFactory().newThread(bw);
+//	public static Thread startBruteWorker(final int[][] family_data, int[] assignments, int from, int to,
+//																				BlockingQueue<Candidate> q, Random prng) {
+//		BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q, prng));
+//		Thread t = Executors.defaultThreadFactory().newThread(bw);
+//		t.start();
+//		return t;
+//	}
+
+	static Thread startBruteWorker(final int[][] family_data, final int[] assignments,
+																 BlockingQueue<int[]> in, BlockingQueue<Candidate> out, Random prng) {
+		Thread t = Executors.defaultThreadFactory().newThread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					while(!Thread.currentThread().isInterrupted()) {
+						int[] job = in.take();
+						int from = job[0];
+						int to = job[1];
+						System.out.println(in.size() + " - " + Thread.currentThread().getName() + " " + Arrays.toString(job));
+						Brute brute = new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, out, prng);
+						brute.optimise();
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		});
 		t.start();
-		//System.out.println("brute worker alive...");
 		return t;
 	}
 
@@ -140,7 +159,6 @@ public class Main {
 		RandomBruteWorker randomBruteWorker = new RandomBruteWorker(optimiser, q, fam, name);
 		Thread t = Executors.defaultThreadFactory().newThread(randomBruteWorker);
 		t.start();
-		//System.out.println("random brute worker alive...");
 		return t;
 	}
 
@@ -149,7 +167,7 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 
-		for(int i = 0; i < 11; i++) {
+		for(int i = 0; i < 0; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
 //		for(int i = 0; i < 5; i++) {
@@ -166,9 +184,18 @@ public class Main {
 //		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 9, "9"));
 //		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 10,"10"));
 
+		ArrayList<int[]> jobs = new ArrayList<>(4999);
+		for(int i = 0; i < 4999; i++) {
+			jobs.add(new int[] {i, i+1});
+		}
+		Collections.shuffle(jobs);
+		ArrayBlockingQueue<int[]> in = new ArrayBlockingQueue<>(4999, true, jobs);
+		for(int i = 0; i < 12; i++) {
+			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
+		}
 
-//		if(brute) {
-//			// 10 brute force threads
+
+			// 10 brute force threads
 //			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
 //			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
 //			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
@@ -179,7 +206,7 @@ public class Main {
 //			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
 //			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
 //			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
-//		}
+
 		return l;
 	}
 
