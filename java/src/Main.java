@@ -140,7 +140,7 @@ public class Main {
 						int[] job = in.take();
 						int from = job[0];
 						int to = job[1];
-						System.out.println(in.size() + " - " + Thread.currentThread().getName() + " " + Arrays.toString(job));
+						System.out.println(String.format("%05.2f",100*(1-((in.size()/4999.0)))) + "% - " + Thread.currentThread().getName() + "\t" + Arrays.toString(job));
 						Brute brute = new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, out, prng);
 						brute.optimise();
 					}
