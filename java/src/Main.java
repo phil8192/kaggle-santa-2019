@@ -167,7 +167,7 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 
-		for(int i = 0; i < 0; i++) {
+		for(int i = 0; i < 3; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
 //		for(int i = 0; i < 5; i++) {
@@ -176,7 +176,7 @@ public class Main {
 
 		// 1 random brute worker
 
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
+		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
 //		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
 //		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, "6"));
 //		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 7, "7"));
@@ -190,7 +190,7 @@ public class Main {
 		}
 		Collections.shuffle(jobs);
 		ArrayBlockingQueue<int[]> in = new ArrayBlockingQueue<>(4999, true, jobs);
-		for(int i = 0; i < 12; i++) {
+		for(int i = 0; i < 8; i++) {
 			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
 		}
 
