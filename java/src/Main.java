@@ -167,7 +167,7 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 
-		for(int i = 0; i < 0; i++) {
+		for(int i = 0; i < 12; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
 //		for(int i = 0; i < 5; i++) {
@@ -176,13 +176,9 @@ public class Main {
 
 		// 1 random brute worker
 
-		//l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 6, "6"));
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 7, "7"));
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 8, "8"));
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 9, "9"));
-//		l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 10,"10"));
+		for(int i = 0; i < 0; i++) {
+			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
+		}
 
 		ArrayList<int[]> jobs = new ArrayList<>(4999);
 		for(int i = 0; i < 4999; i++) {
@@ -190,7 +186,7 @@ public class Main {
 		}
 		Collections.shuffle(jobs);
 		ArrayBlockingQueue<int[]> in = new ArrayBlockingQueue<>(4999, true, jobs);
-		for(int i = 0; i < 11; i++) {
+		for(int i = 0; i < 0; i++) {
 			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
 		}
 
@@ -231,7 +227,7 @@ public class Main {
 
 		final BlockingQueue<Candidate> q = new SynchronousQueue<>();
 		List<Thread> bruteWorkers = null;
-		boolean useBrute = false;
+		boolean useBrute = true;
 		if(useBrute) {
 
 			bruteWorkers = startBruteWorkers(family_data, initialAsignments, q, prng, true);
