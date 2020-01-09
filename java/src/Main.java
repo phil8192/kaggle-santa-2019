@@ -167,7 +167,7 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 
-		for(int i = 0; i < 3; i++) {
+		for(int i = 0; i < 0; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
 //		for(int i = 0; i < 5; i++) {
@@ -190,7 +190,7 @@ public class Main {
 		}
 		Collections.shuffle(jobs);
 		ArrayBlockingQueue<int[]> in = new ArrayBlockingQueue<>(4999, true, jobs);
-		for(int i = 0; i < 8; i++) {
+		for(int i = 0; i < 11; i++) {
 			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
 		}
 
@@ -231,7 +231,7 @@ public class Main {
 
 		final BlockingQueue<Candidate> q = new SynchronousQueue<>();
 		List<Thread> bruteWorkers = null;
-		boolean useBrute = true;
+		boolean useBrute = false;
 		if(useBrute) {
 
 			bruteWorkers = startBruteWorkers(family_data, initialAsignments, q, prng, true);
@@ -274,8 +274,9 @@ public class Main {
 //			sa.optimise();
 			Optimiser optimiser = new Optimiser(family_data, initialAsignments, q, prng);
 			double initial = optimiser.cost(initialAsignments);
-			double delta = optimiser.brute(2, 5, initial);
-			System.out.println(delta);
+			double delta1 = optimiser.brute(1, 5, initial);
+			double delta2 = optimiser.brute(2, 5, initial);
+			System.out.println(delta1 + " " + delta2);
 
 		}
 	}
