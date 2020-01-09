@@ -166,15 +166,9 @@ public class Main {
 																										BlockingQueue<Candidate> q, Random prng, boolean brute) {
 		List<Thread> l = new ArrayList<>();
 
-
 		for(int i = 0; i < 12; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
-//		for(int i = 0; i < 5; i++) {
-//			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2.5, 0.99999, "fast"));
-//		}
-
-		// 1 random brute worker
 
 		for(int i = 0; i < 0; i++) {
 			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
@@ -189,19 +183,6 @@ public class Main {
 		for(int i = 0; i < 0; i++) {
 			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
 		}
-
-
-			// 10 brute force threads
-//			l.add(startBruteWorker(family_data, initialAsignments, 0, 500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 500, 1000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 1000, 1500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 1500, 2000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 2000, 2500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 2500, 3000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 3000, 3500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 3500, 4000, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 4000, 4500, q, prng));
-//			l.add(startBruteWorker(family_data, initialAsignments, 4500, 5000, q, prng));
 
 		return l;
 	}
