@@ -50,7 +50,7 @@ public class Main {
 				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng, temperature, coolingSchedule);
 				double score = sa.cost(sa.getAssignments());
 				double candidateScore = sa.optimise();
-
+				//double candidateScore = sa.optimise2();
 
 
 				if(candidateScore < score) {
@@ -167,11 +167,12 @@ public class Main {
 		List<Thread> l = new ArrayList<>();
 
 		for(int i = 0; i < 12; i++) {
-			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
+			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2.5, 0.999999, "slow"));
 		}
 
 		for(int i = 0; i < 0; i++) {
 			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
+			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
 		}
 
 		ArrayList<int[]> jobs = new ArrayList<>(4999);
@@ -225,6 +226,9 @@ public class Main {
 					final String method = candidate.getMethod();
 					//System.out.println("got new score: " + String.format("%.2f", score) + " (" + method + ")");
 					if(score < best) {
+						if(score < 69000) {
+							System.exit(0);
+						}
 						System.out.println("score: " + String.format("%.2f", score) + " (" + method + ")");
 						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
 						CsvUtil.write(ass, "../../solutions/best.csv");

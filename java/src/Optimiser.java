@@ -1,8 +1,7 @@
 /* h0 h0 h0 */
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.awt.desktop.SystemSleepEvent;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 import static java.lang.Math.abs;
@@ -38,6 +37,8 @@ class Optimiser {
 	final Random prng;
 
 	final BlockingQueue<Candidate> q;
+
+	private final Set<Integer> bad_mondays = new HashSet<>();
 
 	public int[] getAssignments() {
 		return assignments;
@@ -95,6 +96,16 @@ class Optimiser {
 			dayCapacities[day] += famSize;
 		}
 		//System.out.println(Thread.currentThread().getName() + " initialised with " + cost(assignments));
+
+		bad_mondays.add(100);
+		bad_mondays.add(93);
+		bad_mondays.add(86);
+		bad_mondays.add(79);
+		bad_mondays.add(72);
+		bad_mondays.add(65);
+		bad_mondays.add(51);
+		bad_mondays.add(44);
+
 	}
 
 	void sanity(int[] assignments) {
@@ -127,6 +138,9 @@ class Optimiser {
 		for (int i = 0, len = familyAssignments.length; i < len; i++) {
 			final int day = familyAssignments[i];
 			penalty += allPenalties[i][day];
+//			if(bad_mondays.contains(day) && dayCapacities[day] > 125) {
+//				penalty += 10000;
+//			}
 		}
 		return penalty;
 	}
@@ -191,8 +205,17 @@ class Optimiser {
 	}
 
 	double getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay) {
-		final double assignedPenalty = allPenalties[fam][assignedDay];
-		final double candidatePenalty = allPenalties[fam][candidateDay];
+		double assignedPenalty = allPenalties[fam][assignedDay];
+		double candidatePenalty = allPenalties[fam][candidateDay];
+
+//		if(bad_mondays.contains(assignedDay) && dayCapacities[assignedDay] > 125) {
+//			assignedPenalty += 10000;
+//		}
+//
+//		if(bad_mondays.contains(candidateDay) && dayCapacities[candidateDay] >= 125) {
+//			candidatePenalty += 10000;
+//		}
+
 		return candidatePenalty - assignedPenalty;
 	}
 

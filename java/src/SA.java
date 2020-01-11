@@ -134,11 +134,11 @@ public class SA extends Optimiser {
 	double optimise2() {
 		double best = cost(assignments);
 		double current = best;
-		double currentPenalty = getPenalty(assignments);
-		double currentAccount = getAccountingCost();
+		//double currentPenalty = getPenalty(assignments);
+		//double currentAccount = getAccountingCost();
 
 		int x = 0;
-		while (temperature > 0.01 && !Thread.currentThread().isInterrupted()) {
+		while (temperature > 0.7 && !Thread.currentThread().isInterrupted()) {
 			final int start = prng.nextInt(assignments.length);
 			fams: for(int k = 0; k < assignments.length; k++) {
 				final int i = (k+start) % assignments.length;
@@ -148,7 +148,7 @@ public class SA extends Optimiser {
 				final int assignedDayCap = dayCapacities[assignedDay];
 				if (assignedDayCap - famSize >= MIN_PPL) {
 
-					final int xx = 0;//prng.nextInt(10);
+					final int xx = prng.nextInt(10);
 					for (int jj = 0; jj < 10; jj++) {
 						final int j = (jj+xx)%10;
 						final int candidateDay = prefs[j];
@@ -169,8 +169,8 @@ public class SA extends Optimiser {
 									assignments[i] = candidateDay;
 
 									current += delta;
-									currentPenalty += penaltyDelta;
-									currentAccount += accountDelta;
+									//currentPenalty += penaltyDelta;
+									//currentAccount += accountDelta;
 
 									if(candidateScore < best) {
 										if(Math.abs(candidateScore-best) > 0.0001) {
@@ -179,7 +179,7 @@ public class SA extends Optimiser {
 										}
 									}
 
-									break fams;
+									break fams; // found a move.. adjust temp and move on
 								}
 							}
 						}
@@ -188,12 +188,21 @@ public class SA extends Optimiser {
 			}
 			temperature *= coolingSchedule;
 			x++;
-			if(x % 1000 == 0) {
+			if(x % 10000 == 0) {
 				System.out.println(Thread.currentThread().getName() + " " + String.format("%.2f", current) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + x);
+				current = localMinima(0, 0);
+				//final double diff3 = randomBrute(1000000,4 , 5, current);
+				//if(diff3 < 0) {
+				//	current += diff3;
+				//}
+
+				if(current < best) {
+					return current;
+				}
 			}
 		}
-		return currentPenalty + currentAccount;
-		//return best;
+		//return currentPenalty + currentAccount;
+		return best;
 	}
 
 }
