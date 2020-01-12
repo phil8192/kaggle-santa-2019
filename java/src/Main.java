@@ -166,7 +166,7 @@ public class Main {
 																										BlockingQueue<Candidate> q, Random prng, boolean brute) {
 		List<Thread> l = new ArrayList<>();
 
-		for(int i = 0; i < 12; i++) {
+		for(int i = 0; i < 11; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2.5, 0.999999, "slow"));
 		}
 
