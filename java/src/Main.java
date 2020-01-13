@@ -166,13 +166,13 @@ public class Main {
 																										BlockingQueue<Candidate> q, Random prng, boolean brute) {
 		List<Thread> l = new ArrayList<>();
 
-		for(int i = 0; i < 11; i++) {
+		for(int i = 0; i < 12; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2.5, 0.999999, "slow"));
 		}
 
 		for(int i = 0; i < 0; i++) {
 			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
-			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
+//			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
 		}
 
 		ArrayList<int[]> jobs = new ArrayList<>(4999);
