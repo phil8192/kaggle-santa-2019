@@ -1,6 +1,5 @@
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
 
@@ -101,9 +100,9 @@ public class Main {
 			double score = optimiser.cost(optimiser.getAssignments());
 			while (!Thread.currentThread().isInterrupted()) {
 
-				//long l = System.currentTimeMillis();
-				double newScore = score + optimiser.randomBrute(1000, fam, 5, score);
-				//System.out.println("rnd brute "+name+" took " + (System.currentTimeMillis() - l) + "ms.");
+				long l = System.currentTimeMillis();
+				double newScore = score + optimiser.randomBrute(100000000, fam, 5, score);
+				System.out.println("rnd brute "+name+" took " + (System.currentTimeMillis() - l) + "ms.");
 				//System.out.println(newScore);
 				if (newScore < score) {
 					score = newScore;
@@ -172,7 +171,7 @@ public class Main {
 
 		for(int i = 0; i < 0; i++) {
 			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
-			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
+			//l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
 		}
 
 		ArrayList<int[]> jobs = new ArrayList<>(4999);

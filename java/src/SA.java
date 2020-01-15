@@ -91,11 +91,15 @@ public class SA extends Optimiser {
 			i++;
 			localMinima(temperature, 1);
 			double score = localMinima(0, 0);
-//			if(i % 100000 == 0) {
+//			if(i % 10000 == 0) {
 //				// 10 million rounds of random brute force: do not go too far astray
-//				final double diff3 = randomBrute(10000000,3 , 5, score);
+//				final double diff3 = randomBrute(100000,3 , 5, score);
+//				final double diff5 = randomBrute(100000,5 , 5, score);
 //				if(diff3 < 0) {
 //					score += diff3;
+//				}
+//				if(diff5 < 0) {
+//					score += diff5;
 //				}
 //			}
 			if(i % 1000 == 0) {

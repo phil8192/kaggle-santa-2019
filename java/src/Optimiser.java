@@ -97,15 +97,16 @@ class Optimiser {
 		}
 		//System.out.println(Thread.currentThread().getName() + " initialised with " + cost(assignments));
 
-		bad_mondays.add(100);
-		bad_mondays.add(93);
-		bad_mondays.add(86);
-		bad_mondays.add(79);
-		bad_mondays.add(72);
-		bad_mondays.add(65);
-		bad_mondays.add(58);
-		bad_mondays.add(51);
-		bad_mondays.add(44);
+//		bad_mondays.add(100);
+//		bad_mondays.add(93);
+//		bad_mondays.add(86);
+//		bad_mondays.add(79);
+//		bad_mondays.add(72);
+//		bad_mondays.add(65);
+//		bad_mondays.add(58);
+//		bad_mondays.add(51);
+//		bad_mondays.add(44);
+		bad_mondays.add(83);
 	}
 
 	void sanity(int[] assignments) {
@@ -138,9 +139,9 @@ class Optimiser {
 		for (int i = 0, len = familyAssignments.length; i < len; i++) {
 			final int day = familyAssignments[i];
 			penalty += allPenalties[i][day];
-//			if(bad_mondays.contains(day) && dayCapacities[day] > 125) {
-//				penalty += 10000;
-//			}
+			if(bad_mondays.contains(day) && dayCapacities[day] > 125) {
+				penalty += 10000;
+			}
 
 		}
 		return penalty;
@@ -209,13 +210,13 @@ class Optimiser {
 		double assignedPenalty = allPenalties[fam][assignedDay];
 		double candidatePenalty = allPenalties[fam][candidateDay];
 
-//		if(bad_mondays.contains(assignedDay) && dayCapacities[assignedDay] > 125) {
-//			assignedPenalty += 10000;
-//		}
-//
-//		if(bad_mondays.contains(candidateDay) && dayCapacities[candidateDay] >= 125) {
-//			candidatePenalty += 10000;
-//		}
+		if(bad_mondays.contains(assignedDay) && dayCapacities[assignedDay] > 125) {
+			assignedPenalty += 10000;
+		}
+
+		if(bad_mondays.contains(candidateDay) && dayCapacities[candidateDay] >= 125) {
+			candidatePenalty += 10000;
+		}
 
 
 
@@ -257,7 +258,7 @@ class Optimiser {
 		//	System.out.println(prod);
 
 			double penaltyDelta = 0.0;
-
+			boolean move = false;
 			// set all the fams
 			for (int i = 0; i < fams.length; i++) {
 				final int fam = fams[i];
@@ -265,15 +266,16 @@ class Optimiser {
 				final int choice = prod.get(i);
 				final int assignedDay = assignments[fam];
 				final int candidateDay = familyPrefs[fam][choice];
+				if(assignedDay != candidateDay) {
 
+					// assign this family
+					dayCapacities[assignedDay] -= famSize;
+					dayCapacities[candidateDay] += famSize;
+					assignments[fam] = candidateDay;
 
-				// assign this family
-				dayCapacities[assignedDay] -= famSize;
-				dayCapacities[candidateDay] += famSize;
-				assignments[fam] = candidateDay;
-
-				penaltyDelta += getPenaltyDelta(fam, assignedDay, candidateDay);
-
+					penaltyDelta += getPenaltyDelta(fam, assignedDay, candidateDay);
+					move = true;
+				}
 			}
 
 //			final double __penalty = currentPenalty + penaltyDelta;
@@ -298,6 +300,14 @@ class Optimiser {
 
 				final double candidateCost = _penalty + accountingCost;
 				final double delta = candidateCost - current;
+//				if(delta == 0 && move) {
+//
+//					if(prng.nextDouble() < 0.5) {
+//						System.out.println("xxx");
+//						//CsvUtil.write(assignments, "/tmp/x_"+System.currentTimeMillis()+".csv");
+//						return 0;
+//					}
+//				}
 				if (delta < 0) {
 					//final double penalty = getPenalty(assignments);
 					//System.out.println("pen = " + penalty + " _pen = " + _penalty);
@@ -337,7 +347,7 @@ class Optimiser {
 			}
 			final double delta = randomBrute(fams, maxChoice, current, currentPenalty);
 		//	System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
-			if (delta < 0) {
+			if (delta <= 0) {
 				current += delta;
 				currentPenalty = getPenalty(assignments);
 			}
