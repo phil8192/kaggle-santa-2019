@@ -97,16 +97,15 @@ class Optimiser {
 		}
 		//System.out.println(Thread.currentThread().getName() + " initialised with " + cost(assignments));
 
-		//bad_mondays.add(100);
-	//	bad_mondays.add(93);
-	//	bad_mondays.add(86);
-//		bad_mondays.add(79);
-//		bad_mondays.add(72);
-//		bad_mondays.add(65);
-//		bad_mondays.add(58);
-//		bad_mondays.add(51);
-	//	bad_mondays.add(44);
-		bad_mondays.add(97);
+		bad_mondays.add(100);
+		bad_mondays.add(93);
+		bad_mondays.add(86);
+		bad_mondays.add(79);
+		bad_mondays.add(72);
+		bad_mondays.add(65);
+		bad_mondays.add(58);
+		bad_mondays.add(51);
+		bad_mondays.add(44);
 	}
 
 	void sanity(int[] assignments) {
@@ -142,6 +141,7 @@ class Optimiser {
 //			if(bad_mondays.contains(day) && dayCapacities[day] > 125) {
 //				penalty += 10000;
 //			}
+
 		}
 		return penalty;
 	}
@@ -216,6 +216,8 @@ class Optimiser {
 //		if(bad_mondays.contains(candidateDay) && dayCapacities[candidateDay] >= 125) {
 //			candidatePenalty += 10000;
 //		}
+
+
 
 		return candidatePenalty - assignedPenalty;
 	}

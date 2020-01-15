@@ -13,6 +13,7 @@ public class SA extends Optimiser {
 
 	private double acceptanceProbability(final double oldScore, final double newScore, final double temperature) {
 		final double d = newScore - oldScore;
+		if(d==0) return 0.01;
 		// less damaging moves have higher probability
 		return Math.exp(-d / temperature);
 	}
@@ -100,7 +101,7 @@ public class SA extends Optimiser {
 			if(i % 1000 == 0) {
 				System.out.println(Thread.currentThread().getName() + " " + String.format("%.2f", score) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + i);
 			}
-			if (score < best) {
+			if (score < best && Math.abs(score - best) > 0.00001) {
 				best = score;
 				sanity(assignments);
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
@@ -138,7 +139,7 @@ public class SA extends Optimiser {
 		//double currentAccount = getAccountingCost();
 
 		int x = 0;
-		while (temperature > 0.7 && !Thread.currentThread().isInterrupted()) {
+		while (temperature > 0.4 && !Thread.currentThread().isInterrupted()) {
 			final int start = prng.nextInt(assignments.length);
 			fams: for(int k = 0; k < assignments.length; k++) {
 				final int i = (k+start) % assignments.length;

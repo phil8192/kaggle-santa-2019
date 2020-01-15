@@ -172,7 +172,7 @@ public class Main {
 
 		for(int i = 0; i < 0; i++) {
 			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
-//			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
+			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
 		}
 
 		ArrayList<int[]> jobs = new ArrayList<>(4999);
