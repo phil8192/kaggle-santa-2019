@@ -3,6 +3,12 @@ import java.util.ArrayList;
 import com.google.common.collect.Lists;
 
 public class Cartisian {
+	/**
+	 * cartesian product of n_fams x max_choice
+	 * @param fams number of families
+	 * @param maxChoice max choice for each family
+	 * @return cartesian products.
+	 */
 	public static List<List<Integer>> product(final int fams, final int maxChoice) {
 		final List<Integer> l = new ArrayList<>();
 		for(int i = 0; i < maxChoice; i++) {

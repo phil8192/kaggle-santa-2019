@@ -23,9 +23,6 @@ public class SA extends Optimiser {
 		double currentAccount = getAccountingCost();
 
 		double current = currentPenalty + currentAccount;
-		//double current = Math.abs(62868 - currentPenalty) + Math.abs(6020.043432 - currentAccount);
-		//double current = Math.abs(62868 - currentPenalty) + currentAccount;
-		//double current = currentPenalty + Math.abs(6020.043432 - currentAccount);
 
 		boolean improvement;
 		int max = maxLoops;
@@ -63,7 +60,6 @@ public class SA extends Optimiser {
 									currentAccount += accountDelta;
 
 									if (delta < 0.0) {
-										//System.out.println(current);
 										improvement = true;
 										if (temperature == 0) break fams; // start from family 0 again
 										else break;
@@ -109,104 +105,10 @@ public class SA extends Optimiser {
 				best = score;
 				sanity(assignments);
 				System.out.println("**** new best = " + String.format("%.2f", best) + " **** T = " + temperature);
-//				CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score)  + "_sa.csv");
-//				CsvUtil.write(assignments, "../../solutions/best.csv");
   				break;
 			}
 			temperature *= coolingSchedule;
 		}
-//		final double diff1 = brute(1, 5, best);
-//		if(diff1 < 0) {
-//			best += diff1;
-//			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
-//			CsvUtil.write(assignments, "../../solutions/best.csv");
-//		}
-//		final double diff2 = brute(2, 5, best);
-//		if(diff2 < 0) {
-//			best += diff2;
-//			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
-//			CsvUtil.write(assignments, "../../solutions/best.csv");
-//		}
-//		final double diff3 = randomBrute(100000000, 3 , 5, best);
-//		if(diff3 < 0) {
-//			best += diff3;
-//			CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", best)  + "_sa.csv");
-//			CsvUtil.write(assignments, "../../solutions/best.csv");
-//		}
-		return best;
-	}
-
-	double optimise2() {
-		double best = cost(assignments);
-		double current = best;
-		//double currentPenalty = getPenalty(assignments);
-		//double currentAccount = getAccountingCost();
-
-		int x = 0;
-		while (temperature > 0.4 && !Thread.currentThread().isInterrupted()) {
-			final int start = prng.nextInt(assignments.length);
-			fams: for(int k = 0; k < assignments.length; k++) {
-				final int i = (k+start) % assignments.length;
-				final int[] prefs = familyPrefs[i];
-				final int famSize = familySize[i];
-				final int assignedDay = assignments[i];
-				final int assignedDayCap = dayCapacities[assignedDay];
-				if (assignedDayCap - famSize >= MIN_PPL) {
-
-					final int xx = prng.nextInt(10);
-					for (int jj = 0; jj < 10; jj++) {
-						final int j = (jj+xx)%10;
-						final int candidateDay = prefs[j];
-						if (candidateDay != assignedDay) {
-							final int candidateDayCap = dayCapacities[candidateDay];
-							if (candidateDayCap + famSize <= MAX_PPL) {
-
-								final double penaltyDelta = getPenaltyDelta(i, assignedDay, candidateDay);
-								final double accountDelta = getAccountingDelta(assignedDay, candidateDay, famSize);
-								final double delta = penaltyDelta + accountDelta;
-								final double candidateScore = current + delta;
-
-								if (candidateScore < current
-										|| acceptanceProbability(current, candidateScore, temperature) >= prng.nextDouble()) {
-
-									dayCapacities[assignedDay] -= famSize;
-									dayCapacities[candidateDay] += famSize;
-									assignments[i] = candidateDay;
-
-									current += delta;
-									//currentPenalty += penaltyDelta;
-									//currentAccount += accountDelta;
-
-									if(candidateScore < best) {
-										if(Math.abs(candidateScore-best) > 0.0001) {
-											System.out.println(candidateScore + " < " + best);
-											return candidateScore;
-										}
-									}
-
-									break fams; // found a move.. adjust temp and move on
-								}
-							}
-						}
-					}
-				}
-			}
-			temperature *= coolingSchedule;
-			x++;
-			if(x % 10000 == 0) {
-				System.out.println(Thread.currentThread().getName() + " " + String.format("%.2f", current) + " T = " + ANSI_GREEN + String.format("%.6f", temperature) + ANSI_RESET + " I = " + x);
-				current = localMinima(0, 0);
-				//final double diff3 = randomBrute(1000000,4 , 5, current);
-				//if(diff3 < 0) {
-				//	current += diff3;
-				//}
-
-				if(current < best) {
-					return current;
-				}
-			}
-		}
-		//return currentPenalty + currentAccount;
 		return best;
 	}
 

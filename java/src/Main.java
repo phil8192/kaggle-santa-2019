@@ -1,12 +1,13 @@
+/* h0 h0 h0 */
+
 import java.util.*;
 import java.util.concurrent.*;
 
 public class Main {
 
-	//static AtomicInteger tripwire = new AtomicInteger(0);
-
 	static class BruteWorker implements Runnable {
 		Brute brute;
+
 		BruteWorker(Brute brute) {
 			this.brute = brute;
 		}
@@ -14,12 +15,11 @@ public class Main {
 		@Override
 		public void run() {
 			try {
-				Thread.sleep(5*1000);
+				Thread.sleep(5 * 1000);
 				brute.optimise();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
-			//System.out.println(Thread.currentThread().getName() + " brute worker. time to die...");
 		}
 	}
 
@@ -32,8 +32,8 @@ public class Main {
 		double coolingSchedule;
 		String id;
 
-		public SAWorker(final int[][] family_data, final int[] assignemnts, final Random prng, BlockingQueue<Candidate> q,
-										double temperature, double coolingSchedule, String id) {
+		SAWorker(final int[][] family_data, final int[] assignemnts, final Random prng, BlockingQueue<Candidate> q,
+						 double temperature, double coolingSchedule, String id) {
 			this.q = q;
 			this.family_data = family_data;
 			this.assignments = Arrays.copyOf(assignemnts, assignemnts.length);
@@ -49,38 +49,24 @@ public class Main {
 				SA sa = new SA(family_data, Arrays.copyOf(assignments, assignments.length), prng, temperature, coolingSchedule);
 				double score = sa.cost(sa.getAssignments());
 				double candidateScore = sa.optimise();
-				//double candidateScore = sa.optimise2();
-
-
-				if(candidateScore < score) {
-
-//					double lala = sa.cost(sa.getAssignments());
-//					if(Math.abs(lala-candidateScore) > 0.00001) {
-//						System.out.println(lala + " != " + candidateScore);
-//						System.exit(0);
-//					}
-
+				if (candidateScore < score) {
 					try {
-						//tripwire.incrementAndGet();
-						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa_"+id);
+						Candidate candidate = new Candidate(Arrays.copyOf(sa.getAssignments(), 5000), candidateScore, "sa_" + id);
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
-					} finally {
-						//tripwire.decrementAndGet();
 					}
 				}
 			}
 		}
 	}
 
-	public static Thread startSAWorker(final int[][] family_data, int[] assignments,
-																		 BlockingQueue<Candidate> q, Random prng,
-																		 double temperature, double coolingSchedule, String id) {
+	private static Thread startSAWorker(final int[][] family_data, int[] assignments,
+																			BlockingQueue<Candidate> q, Random prng,
+																			double temperature, double coolingSchedule, String id) {
 		SAWorker saWorker = new SAWorker(family_data, assignments, prng, q, temperature, coolingSchedule, id);
 		Thread t = Executors.defaultThreadFactory().newThread(saWorker);
 		t.start();
-		//System.out.println("brute worker alive...");
 		return t;
 	}
 
@@ -89,12 +75,14 @@ public class Main {
 		BlockingQueue<Candidate> q;
 		int fam;
 		String name;
+
 		public RandomBruteWorker(Optimiser optimiser, BlockingQueue<Candidate> q, int fam, String name) {
 			this.optimiser = optimiser;
 			this.q = q;
 			this.fam = fam;
 			this.name = name;
 		}
+
 		@Override
 		public void run() {
 			double score = optimiser.cost(optimiser.getAssignments());
@@ -102,58 +90,42 @@ public class Main {
 
 				long l = System.currentTimeMillis();
 				double newScore = score + optimiser.randomBrute(100000000, fam, 5, score);
-				System.out.println("rnd brute "+name+" took " + (System.currentTimeMillis() - l) + "ms.");
-				//System.out.println(newScore);
+				System.out.println("rnd brute " + name + " took " + (System.currentTimeMillis() - l) + "ms.");
 				if (newScore < score) {
 					score = newScore;
 					try {
-						//tripwire.incrementAndGet();
-						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute_"+name);
+						Candidate candidate = new Candidate(Arrays.copyOf(optimiser.getAssignments(), 5000), newScore, "rnd_brute_" + name);
 						q.put(candidate);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
-					} finally {
-						//tripwire.decrementAndGet();
 					}
 				}
 			}
-			//System.out.println(Thread.currentThread().getName() + " random brute worker. time to die...");
 		}
 	}
 
-//	public static Thread startBruteWorker(final int[][] family_data, int[] assignments, int from, int to,
-//																				BlockingQueue<Candidate> q, Random prng) {
-//		BruteWorker bw = new BruteWorker(new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, q, prng));
-//		Thread t = Executors.defaultThreadFactory().newThread(bw);
-//		t.start();
-//		return t;
-//	}
-
 	static Thread startBruteWorker(final int[][] family_data, final int[] assignments,
 																 BlockingQueue<int[]> in, BlockingQueue<Candidate> out, Random prng) {
-		Thread t = Executors.defaultThreadFactory().newThread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					while(!Thread.currentThread().isInterrupted()) {
-						int[] job = in.take();
-						int from = job[0];
-						int to = job[1];
-						System.out.println(String.format("%05.2f",100*(1-((in.size()/4999.0)))) + "% - " + Thread.currentThread().getName() + "\t" + Arrays.toString(job));
-						Brute brute = new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, out, prng);
-						brute.optimise();
-					}
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
+		Thread t = Executors.defaultThreadFactory().newThread(() -> {
+			try {
+				while (!Thread.currentThread().isInterrupted()) {
+					int[] job = in.take();
+					int from = job[0];
+					int to = job[1];
+					System.out.println(String.format("%05.2f", 100 * (1 - ((in.size() / 4999.0)))) + "% - " + Thread.currentThread().getName() + "\t" + Arrays.toString(job));
+					Brute brute = new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, out, prng);
+					brute.optimise();
 				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 			}
 		});
 		t.start();
 		return t;
 	}
 
-	public static Thread startRandomBruteWorker(final int[][] family_data, int[] assignments,
-																							BlockingQueue<Candidate> q, Random prng, int fam, String name) {
+	private static Thread startRandomBruteWorker(final int[][] family_data, int[] assignments,
+																							 BlockingQueue<Candidate> q, Random prng, int fam, String name) {
 		Optimiser optimiser = new Optimiser(family_data, Arrays.copyOf(assignments, assignments.length), q, prng);
 		RandomBruteWorker randomBruteWorker = new RandomBruteWorker(optimiser, q, fam, name);
 		Thread t = Executors.defaultThreadFactory().newThread(randomBruteWorker);
@@ -161,34 +133,47 @@ public class Main {
 		return t;
 	}
 
-	public static List<Thread> startBruteWorkers(int[][] family_data, int[] initialAsignments,
-																										BlockingQueue<Candidate> q, Random prng, boolean brute) {
+	/**
+	 * mix of algos.
+	 *
+	 * @param family_data family preferences + data.
+	 * @param initialAsignments original assignments.
+	 * @param q queue to dump candidate solutions on.
+	 * @param prng random number generator.
+	 * @return
+	 */
+	private static List<Thread> startBruteWorkers(int[][] family_data, int[] initialAsignments,
+																								BlockingQueue<Candidate> q, Random prng) {
 		List<Thread> l = new ArrayList<>();
 
-		for(int i = 0; i < 12; i++) {
-			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 2.5, 0.999999, "slow"));
+		// mod...
+
+		// simulated annealing workers
+		for (int i = 0; i < 1; i++) {
+			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
 
-		for(int i = 0; i < 0; i++) {
+		// random brute force workers.
+		for (int i = 0; i < 1; i++) {
 			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
-			//l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 5, "5"));
 		}
 
+		// brute force workers with order of scan randomised (random and complete algo.)
 		ArrayList<int[]> jobs = new ArrayList<>(4999);
-		for(int i = 0; i < 4999; i++) {
-			jobs.add(new int[] {i, i+1});
+		for (int i = 0; i < 4999; i++) {
+			jobs.add(new int[]{i, i + 1});
 		}
 		Collections.shuffle(jobs);
 		ArrayBlockingQueue<int[]> in = new ArrayBlockingQueue<>(4999, true, jobs);
-		for(int i = 0; i < 0; i++) {
+		for (int i = 0; i < 10; i++) {
 			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
 		}
 
 		return l;
 	}
 
-	public static void killBruteWorkers(List<Thread> bruteWorkerList) {
-		for(Thread bruteWorker : bruteWorkerList) {
+	private static void killBruteWorkers(List<Thread> bruteWorkerList) {
+		for (Thread bruteWorker : bruteWorkerList) {
 			bruteWorker.interrupt();
 		}
 	}
@@ -198,7 +183,6 @@ public class Main {
 
 		int[][] family_data = CsvUtil.read("../../../data/family_data.csv");
 		int[][] starting_solution = CsvUtil.read("../../solutions/best.csv");
-//		int[][] starting_solution = CsvUtil.read("/tmp/lala.csv");
 
 		assert starting_solution != null;
 		int[] initialAsignments = new int[starting_solution.length];
@@ -208,56 +192,36 @@ public class Main {
 
 		final BlockingQueue<Candidate> q = new SynchronousQueue<>();
 		List<Thread> bruteWorkers = null;
-		boolean useBrute = true;
-		if(useBrute) {
 
-			bruteWorkers = startBruteWorkers(family_data, initialAsignments, q, prng, true);
+		bruteWorkers = startBruteWorkers(family_data, initialAsignments, q, prng);
 
-			double best = Double.MAX_VALUE;
+		double best = Double.MAX_VALUE;
 
-			while(true) {
-				try {
-					//System.out.println("waiting for new score...");
-					long l = System.currentTimeMillis();
-					Candidate candidate = q.take();
-					final double score = candidate.getScore();
-					final int[] ass = candidate.getAss();
-					final String method = candidate.getMethod();
-					//System.out.println("got new score: " + String.format("%.2f", score) + " (" + method + ")");
-					if(score < best) {
-						if(score < 69000) {
-							System.exit(0);
-						}
-						System.out.println("score: " + String.format("%.2f", score) + " (" + method + ")");
-						CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
-						CsvUtil.write(ass, "../../solutions/best.csv");
-						//System.out.println("killing workers");
-
-						//if(tripwire.get() == 0) { // only killall if noting waiting to share a result.
-							System.out.println("killall");
-							killBruteWorkers(bruteWorkers);
-							bruteWorkers = startBruteWorkers(family_data, ass, q, prng, true);
-						//}
-						best = score;
+		while (true) {
+			try {
+				long l = System.currentTimeMillis();
+				Candidate candidate = q.take();
+				final double score = candidate.getScore();
+				final int[] ass = candidate.getAss();
+				final String method = candidate.getMethod();
+				if (score < best) {
+					if (score < 69000) { // def smt. wrong.
+						System.exit(0);
 					}
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
+					System.out.println("score: " + String.format("%.2f", score) + " (" + method + ")");
+					CsvUtil.write(ass, "../../solutions/" + String.format("%.2f", score) + "_" + method + ".csv");
+					CsvUtil.write(ass, "../../solutions/best.csv");
+					//System.out.println("killing workers");
+
+					System.out.println("killall");
+					killBruteWorkers(bruteWorkers);
+					bruteWorkers = startBruteWorkers(family_data, ass, q, prng);
+
+					best = score;
 				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 			}
-
-		} else {
-//			SA sa = new SA(family_data, initialAsignments, prng, 3,999999);
-//			double pen = sa.getPenalty(initialAsignments);
-//			double acc = sa.getAccountingCost();
-//			double score = pen + acc;
-//			System.out.println(score + " (" + pen + ") (" + acc + ")");
-//			sa.optimise();
-			Optimiser optimiser = new Optimiser(family_data, initialAsignments, q, prng);
-			double initial = optimiser.cost(initialAsignments);
-			double delta1 = optimiser.brute(1, 5, initial);
-			double delta2 = optimiser.brute(2, 5, initial);
-			System.out.println(delta1 + " " + delta2);
-
 		}
 	}
 }

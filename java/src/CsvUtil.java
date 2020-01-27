@@ -4,8 +4,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 
-public class CsvUtil {
-	public static int[][] read(String src) {
+/**
+ * just some utils for reading/writing csv.
+ */
+class CsvUtil {
+	static int[][] read(String src) {
 		ArrayList<int[]> a = new ArrayList<>();
 		try {
 			try (BufferedReader reader = new BufferedReader(new FileReader(src))) {
@@ -25,7 +28,7 @@ public class CsvUtil {
 		return null;
 	}
 
-	public static void write(int[] assignments, String dst) {
+	static void write(int[] assignments, String dst) {
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(dst));
 			writer.write("family_id,assigned_day\n");

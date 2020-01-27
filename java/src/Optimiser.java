@@ -1,6 +1,3 @@
-/* h0 h0 h0 */
-
-import java.awt.desktop.SystemSleepEvent;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
@@ -95,7 +92,8 @@ class Optimiser {
 			int famSize = familySize[i];
 			dayCapacities[day] += famSize;
 		}
-		//System.out.println(Thread.currentThread().getName() + " initialised with " + cost(assignments));
+
+		// monday soft-constraints
 
 //		bad_mondays.add(100);
 //		bad_mondays.add(93);
@@ -106,7 +104,8 @@ class Optimiser {
 //		bad_mondays.add(58);
 //		bad_mondays.add(51);
 //		bad_mondays.add(44);
-		bad_mondays.add(83);
+//		bad_mondays.add(23); <---
+// 		bad_mondays.add(83);
 	}
 
 	void sanity(int[] assignments) {
@@ -139,9 +138,9 @@ class Optimiser {
 		for (int i = 0, len = familyAssignments.length; i < len; i++) {
 			final int day = familyAssignments[i];
 			penalty += allPenalties[i][day];
-			if(bad_mondays.contains(day) && dayCapacities[day] > 125) {
-				penalty += 10000;
-			}
+//			if(bad_mondays.contains(day) && dayCapacities[day] > 125) {
+//				penalty += 10000;
+//			}
 
 		}
 		return penalty;
@@ -157,13 +156,24 @@ class Optimiser {
 		return accounting;
 	}
 
+	/**
+	 * objective function
+	 * @param familyAssignments assigned families
+	 * @return cost of candidate solution
+	 */
 	double cost(final int[] familyAssignments) {
 		final double penalty = getPenalty(familyAssignments);
 		final double accounting = getAccountingCost();
 		return penalty + accounting;
 	}
 
-	// the amount that assignedDay contributes to the accounting cost.
+	/**
+	 * the amount that assignedDay contributes to the accounting cost.
+	 *
+	 * @param assignedDay ...
+	 * @param famSize ...
+	 * @return cost of having famSize on this day.
+	 */
 	private double getAssignedAccountingDelta(final int assignedDay, final int famSize) {
 		final double ac1; // how it is.
 		final double ac2; // how it is *without* family.
@@ -184,7 +194,14 @@ class Optimiser {
 		return ac2 - ac1;
 	}
 
-	// the amount that candidateDay will contribute to the accounting cost.
+	/**
+	 * the amount that candidateDay will contribute to the accounting cost.
+	 *
+	 * @param assignedDay the current assigned day
+	 * @param candidateDay the target assignment
+	 * @param famSize family size
+	 * @return +- improvement delta.
+	 */
 	private double getCandidateAccountingDelta(final int assignedDay, final int candidateDay, final int famSize) {
 		final double ac1; // how it is
 		final double ac2; // how it is *with* family.
@@ -193,8 +210,10 @@ class Optimiser {
 			ac1 = getAccountingCost(dayCapacities[1], dayCapacities[2] - (2 == assignedDay ? famSize : 0));
 			ac2 = getAccountingCost(dayCapacities[1] + famSize, dayCapacities[2] - (2 == assignedDay ? famSize : 0));
 		} else if (candidateDay == 100) {
-			ac1 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100]) + getAccountingCost(dayCapacities[100], dayCapacities[100]);
-			ac2 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100] + famSize) + getAccountingCost(dayCapacities[100] + famSize, dayCapacities[100] + famSize);
+			ac1 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100]) +
+					getAccountingCost(dayCapacities[100], dayCapacities[100]);
+			ac2 = getAccountingCost(dayCapacities[99] - (99 == assignedDay ? famSize : 0), dayCapacities[100] + famSize) +
+					getAccountingCost(dayCapacities[100] + famSize, dayCapacities[100] + famSize);
 		} else {
 			final int nextDayCap = dayCapacities[candidateDay - 1] - (candidateDay - 1 == assignedDay ? famSize : 0);
 			final int currDayCap = dayCapacities[candidateDay];
@@ -206,29 +225,47 @@ class Optimiser {
 		return ac2 - ac1;
 	}
 
+	/**
+	 * penalty delta.
+	 *
+	 * @param fam fam index.
+	 * @param assignedDay current assigned day.
+	 * @param candidateDay target assignment.
+	 * @return delta.
+	 */
 	double getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay) {
 		double assignedPenalty = allPenalties[fam][assignedDay];
 		double candidatePenalty = allPenalties[fam][candidateDay];
 
-		if(bad_mondays.contains(assignedDay) && dayCapacities[assignedDay] > 125) {
-			assignedPenalty += 10000;
-		}
-
-		if(bad_mondays.contains(candidateDay) && dayCapacities[candidateDay] >= 125) {
-			candidatePenalty += 10000;
-		}
-
-
+//		if(bad_mondays.contains(assignedDay) && dayCapacities[assignedDay] > 125) {
+//			assignedPenalty += 10000;
+//		}
+//
+//		if(bad_mondays.contains(candidateDay) && dayCapacities[candidateDay] >= 125) {
+//			candidatePenalty += 10000;
+//		}
 
 		return candidatePenalty - assignedPenalty;
 	}
 
+	/**
+	 * accounting delta.
+	 *
+	 * @param assignedDay current assigned day.
+	 * @param candidateDay target day.
+	 * @param famSize family size.
+	 * @return delta.
+	 */
 	double getAccountingDelta(final int assignedDay, final int candidateDay, final int famSize) {
 		final double ac1 = getAssignedAccountingDelta(assignedDay, famSize);
 		final double ac2 = getCandidateAccountingDelta(assignedDay, candidateDay, famSize);
 		return ac1 + ac2;
 	}
 
+	/**
+	 * check ok.
+	 * @return true if capacity (hard constraints) not violated.
+	 */
 	private boolean checkCapacityConstraints() {
 		for (int i = 1; i < dayCapacities.length; i++) {
 			final int cap = dayCapacities[i];
@@ -239,10 +276,16 @@ class Optimiser {
 		return true;
 	}
 
+	/**
+	 * scan for moves given set of families.
+	 *
+	 * @param fams family indices to try.
+	 * @param maxChoice max day pref choice.
+	 * @param current current score.
+	 * @param currentPenalty current penalty.
+	 * @return delta.
+	 */
 	double scan(final Integer[] fams, final int maxChoice, final double current, final double currentPenalty) {
-
-		// todo: use getPenaltyDelta(final int fam, final int assignedDay, final int candidateDay)
-		//double penaltyDelta = 0.0;
 
 		// stash the original assignments
 		final int[] original = new int[fams.length];
@@ -253,12 +296,8 @@ class Optimiser {
 		// try all possible configurations
 		final List<List<Integer>> prods = Cartisian.product(fams.length, maxChoice);
 
-
 		for (final List<Integer> prod : prods) { // for each set of choices
-		//	System.out.println(prod);
-
 			double penaltyDelta = 0.0;
-			boolean move = false;
 			// set all the fams
 			for (int i = 0; i < fams.length; i++) {
 				final int fam = fams[i];
@@ -274,43 +313,18 @@ class Optimiser {
 					assignments[fam] = candidateDay;
 
 					penaltyDelta += getPenaltyDelta(fam, assignedDay, candidateDay);
-					move = true;
 				}
 			}
 
-//			final double __penalty = currentPenalty + penaltyDelta;
-//			final double xpenalty = getPenalty(assignments);
-//			if(Math.abs(__penalty - xpenalty) > 0.00001) {
-//				System.out.println("X _pen = " + __penalty + " X pen = " + xpenalty);
-//			}
-
 			// if no constraint violation and improvement, return improvement delta
 			if (checkCapacityConstraints()) {
-				// expensive -> final double candidateCost = cost(assignments);
-
 
 				final double _penalty = currentPenalty + penaltyDelta;
-				//final double _penalty = getPenalty(assignments);
-				//if(Math.abs(_penalty - penalty) > 0.00001) {
-				//	System.out.println("X _pen = " + _penalty + " X pen = " + penalty);
-				//}
-
-				//System.out.println("pen = " + penalty + " _pen = " + _penalty);
 				final double accountingCost = getAccountingCost();
-
 				final double candidateCost = _penalty + accountingCost;
 				final double delta = candidateCost - current;
-//				if(delta == 0 && move) {
-//
-//					if(prng.nextDouble() < 0.5) {
-//						System.out.println("xxx");
-//						//CsvUtil.write(assignments, "/tmp/x_"+System.currentTimeMillis()+".csv");
-//						return 0;
-//					}
-//				}
+
 				if (delta < 0) {
-					//final double penalty = getPenalty(assignments);
-					//System.out.println("pen = " + penalty + " _pen = " + _penalty);
 					return delta;
 				}
 			}
@@ -328,6 +342,15 @@ class Optimiser {
 		return 0;
 	}
 
+	/**
+	 * randomly brute force (select random families, brute force them).
+	 *
+	 * @param fams num families.
+	 * @param maxChoice max assignment pref.
+	 * @param current current score.
+	 * @param currentPenalty current penalty.
+	 * @return delta.
+	 */
 	private double randomBrute(final int fams, final int maxChoice, final double current, final double currentPenalty) {
 		// get list of random family indices
 		final Integer[] randomFams = prng.ints(0, 5000)
@@ -338,6 +361,15 @@ class Optimiser {
 		return scan(randomFams, maxChoice, current, currentPenalty);
 	}
 
+	/**
+	 * random brute with rounds.
+	 *
+	 * @param rounds number of times to try random brutes.
+	 * @param fams number of families
+	 * @param maxChoice max assignment choice.
+	 * @param score current score.
+	 * @return delta.
+	 */
 	double randomBrute(final int rounds, final int fams, final int maxChoice, final double score) {
 		double currentPenalty = getPenalty(assignments);
 		double current = score;
@@ -346,7 +378,6 @@ class Optimiser {
 				return current - score;
 			}
 			final double delta = randomBrute(fams, maxChoice, current, currentPenalty);
-		//	System.out.println("probe = " + ANSI_GREEN + i + ANSI_RESET + " (" + String.format("%.2f", current) + ")");
 			if (delta <= 0) {
 				current += delta;
 				currentPenalty = getPenalty(assignments);
@@ -355,6 +386,14 @@ class Optimiser {
 		return current - score;
 	}
 
+	/**
+	 * brute force.
+	 *
+	 * @param fams max families.
+	 * @param maxChoice max choice.
+	 * @param current current score.
+	 * @return delta.
+	 */
 	double brute(final int fams, final int maxChoice, final double current) {
 		double score = current;
 		double currentPenalty = getPenalty(assignments);
@@ -371,37 +410,19 @@ class Optimiser {
 
 				if (delta < 0) {
 					score += delta;
-
-					//double p = getPenalty(assignments);
-					//double a = getAccountingCost();
-					//double c = p + a;
-
 					currentPenalty = getPenalty(assignments);
-//					System.out.println(String.format("%.2f", score) + " (" + c + ")");
-//					if(Math.abs(c - score) > 0.00001) {
-//						System.exit(0);
-//					} else {
-
-
-					//CsvUtil.write(assignments, "../../solutions/" + String.format("%.2f", score) + "_b.csv");
-					//CsvUtil.write(assignments, "../../solutions/best.csv");
-
-
-					//}
-
-
-
-i++;
+					i++;
 					improvement = true;
-
-
-
 				}
 			}
 		} while (improvement);
 		return score - current;
 	}
 
+	/**
+	 * default optimisation: 1 million rounds of random brute force.
+	 * @return delta.
+	 */
 	double optimise() {
 		final double score = cost(assignments);
 		return randomBrute(1000000, 3, 5, score);
