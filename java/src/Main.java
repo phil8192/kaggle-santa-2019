@@ -89,7 +89,7 @@ public class Main {
 			while (!Thread.currentThread().isInterrupted()) {
 
 				long l = System.currentTimeMillis();
-				double newScore = score + optimiser.randomBrute(100000000, fam, 5, score);
+				double newScore = score + optimiser.randomBrute(100000000, fam, 4, score);
 				System.out.println("rnd brute " + name + " took " + (System.currentTimeMillis() - l) + "ms.");
 				if (newScore < score) {
 					score = newScore;
@@ -113,7 +113,7 @@ public class Main {
 					int from = job[0];
 					int to = job[1];
 					System.out.println(String.format("%05.2f", 100 * (1 - ((in.size() / 4999.0)))) + "% - " + Thread.currentThread().getName() + "\t" + Arrays.toString(job));
-					Brute brute = new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 5, out, prng);
+					Brute brute = new Brute(family_data, Arrays.copyOf(assignments, assignments.length), from, to, 4, out, prng);
 					brute.optimise();
 				}
 			} catch (InterruptedException e) {
@@ -149,13 +149,13 @@ public class Main {
 		// mod...
 
 		// simulated annealing workers
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 12; i++) {
 			l.add(startSAWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, 0.999999, "slow"));
 		}
 
 		// random brute force workers.
-		for (int i = 0; i < 1; i++) {
-			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 4, "4"));
+		for (int i = 0; i < 0; i++) {
+			l.add(startRandomBruteWorker(family_data, initialAsignments, q, new Random(prng.nextInt()), 3, "4"));
 		}
 
 		// brute force workers with order of scan randomised (random and complete algo.)
@@ -165,7 +165,7 @@ public class Main {
 		}
 		Collections.shuffle(jobs);
 		ArrayBlockingQueue<int[]> in = new ArrayBlockingQueue<>(4999, true, jobs);
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 0; i++) {
 			l.add(startBruteWorker(family_data, initialAsignments, in, q, prng));
 		}
 

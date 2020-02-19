@@ -6,10 +6,15 @@ Code for last year can be found [here](https://github.com/phil8192/tsp-java).
 
 ## Features
 
-* Multithreaded search using a mix of brute-force and Simulated Annealing.
+* Multi-threaded search using a mix of brute-force and Simulated Annealing.
 * Fast computation of objective function using deltas for assignment and
   accounting penalties.
 * Random and brute-force search over cartesian product of candidate
   assignments.
 * Simulated Annealing with probalistic candidate selection favouring least
   damaging moves.
+
+## Score
+
+* 69101.38 [(114/1,620)](https://www.kaggle.com/edgecrusher/competitions) (< 0.31% of optimal lower bound)
+* 69042.01 (104) - post competition deadline

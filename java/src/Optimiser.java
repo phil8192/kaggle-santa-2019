@@ -104,8 +104,9 @@ class Optimiser {
 //		bad_mondays.add(58);
 //		bad_mondays.add(51);
 //		bad_mondays.add(44);
-//		bad_mondays.add(23); <---
-// 		bad_mondays.add(83);
+//		bad_mondays.add(37);
+//		bad_mondays.add(23); // <---
+
 	}
 
 	void sanity(int[] assignments) {
