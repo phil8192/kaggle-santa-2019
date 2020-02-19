@@ -1,0 +1,10 @@
+args<-commandArgs(trailingOnly=T)
+x<-read.csv(args[1])
+y<-read.csv("../../../data/family_data.csv")
+x$fams<-y$n_people
+score<-gsub("_.*","",gsub(".csv","",gsub(".*/","",args[1])))
+jpeg(paste0("/tmp/plots/",score,".jpg"),width=640)
+par(bg="black",fg="red",cex.main=2)
+plot(tapply(x$fams,x$assigned_day,sum),type="s",bty="n",axes=F,lwd=3,ann=F,,main=score)
+title(score,col.main="white")
+dev.off()
